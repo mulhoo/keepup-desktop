@@ -34,6 +34,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_DEMO_MODE: ${{ secrets.VITE_DEMO_MODE }}
         run: npm run build -- --mode ${{ steps.env.outputs.vite_mode }}
 
       - name: Configure AWS credentials
