@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, ChevronDown, Loader2, Mail, Phone } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { fetchSportDetail, DEMO_COACH_SPORTS, type SportMember, type MemberRole } from '@/api/sports'
+import { fetchSportDetail, DEMO_COACH_SPORTS, type SportMember } from '@/api/sports'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
@@ -208,7 +208,7 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
 type SortCol = 'first_name' | 'last_name' | 'grade'
 type SortDir = 'asc' | 'desc'
 
-function SortIcon({ col, active, dir }: { col: string; active: boolean; dir: SortDir }) {
+function SortIcon({ active, dir }: { col?: string; active: boolean; dir: SortDir }) {
   if (!active) return <ArrowUpDown className="w-3 h-3 opacity-30 ml-1 inline-block" />
   return dir === 'asc'
     ? <ArrowUp className="w-3 h-3 ml-1 inline-block" />

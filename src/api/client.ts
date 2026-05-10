@@ -1,5 +1,8 @@
+import { parseDistrictSubdomain } from '@/lib/subdomain'
+
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
+const DISTRICT_SUBDOMAIN = parseDistrictSubdomain()
 
 export { DEMO_MODE }
 
@@ -23,6 +26,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(DISTRICT_SUBDOMAIN ? { 'X-District-Subdomain': DISTRICT_SUBDOMAIN } : {}),
       ...options.headers,
     },
   })

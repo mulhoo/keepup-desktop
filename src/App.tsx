@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { DistrictProvider } from '@/contexts/DistrictContext'
 import { BrandingProvider } from '@/contexts/BrandingContext'
 import { ProfileProvider } from '@/contexts/ProfileContext'
 import { UserPhotoProvider } from '@/contexts/UserPhotoContext'
@@ -64,6 +65,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <DistrictProvider>
       <AuthProvider>
         <BrandingProvider>
           <ProfileProvider>
@@ -77,6 +79,7 @@ export default function App() {
           </ProfileProvider>
         </BrandingProvider>
       </AuthProvider>
+      </DistrictProvider>
     </QueryClientProvider>
   )
 }

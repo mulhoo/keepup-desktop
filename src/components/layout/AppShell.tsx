@@ -19,7 +19,7 @@ import { fetchSports, DEMO_COACH_SPORTS } from '@/api/sports'
 import { fetchLinkedAccounts, DEMO_BASE, type LinkedAccount } from '@/api/linkedAccounts'
 import { linkedAccountKey } from '@/contexts/ProfileContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+
 import { cn } from '@/lib/utils'
 import Family from '@/pages/Family'
 
@@ -261,7 +261,6 @@ export default function AppShell() {
 
   const isCoach = demoRole === 'head_coach' || demoRole === 'assistant_coach'
   const base = DEMO_BASE[demoRole ?? '']
-  const currentSchool   = activeProfile?.school_name   ?? base?.school_name
   const currentDistrict = activeProfile?.district_name ?? base?.district_name
   const isDiffDistrict  = isCoach && !!activeProfile && activeProfile.district_name !== base?.district_name
 

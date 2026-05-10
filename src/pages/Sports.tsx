@@ -22,12 +22,7 @@ const SEASON_COLOR: Record<string, string> = {
   winter: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   spring: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
 }
-const ROLE_LABEL: Record<MemberRole, string> = {
-  head_coach:      'Head Coach',
-  assistant_coach: 'Asst. Coach',
-  student_captain: 'Captain',
-  student:         'Athlete',
-}
+
 const ROLE_LABEL_PLURAL: Record<MemberRole, string> = {
   head_coach:      'Head Coaches',
   assistant_coach: 'Asst. Coaches',

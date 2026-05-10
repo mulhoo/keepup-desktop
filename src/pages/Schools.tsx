@@ -8,10 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from '@/lib/utils'
 
 const SEASON_LABEL: Record<string, string> = { fall: 'Fall', winter: 'Winter', spring: 'Spring' }
-const ROLE_LABEL: Record<MemberRole, string> = {
-  head_coach: 'Head Coach', assistant_coach: 'Asst. Coach',
-  student_captain: 'Captain', student: 'Athlete',
-}
+
 const ROLE_LABEL_PLURAL: Record<MemberRole, string> = {
   head_coach: 'Head Coaches', assistant_coach: 'Asst. Coaches',
   student_captain: 'Captains', student: 'Athletes',
@@ -191,7 +188,7 @@ function SchoolPanel({ school, onClose }: { school: School; onClose: () => void 
               {[
                 school.principal        && { person: school.principal,        label: 'Principal' },
                 school.athletic_director && { person: school.athletic_director, label: 'Athletic Director' },
-              ].filter(Boolean).map(({ person, label }) => (
+              ].filter((x): x is { person: NonNullable<typeof school.principal>; label: string } => Boolean(x)).map(({ person, label }) => (
                 <div key={label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-none">
                     {person.first_name[0]}{person.last_name[0]}

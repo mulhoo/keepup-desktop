@@ -118,7 +118,7 @@ type Step = 'type' | 'upload' | 'preview' | 'done'
 
 export default function Import() {
   const { demoRole } = useAuth()
-  const isAD = demoRole === 'athletic_director'
+
 
   const { data: sports = [] } = useQuery({
     queryKey: ['sports'],
