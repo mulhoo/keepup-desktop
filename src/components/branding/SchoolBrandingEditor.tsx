@@ -7,11 +7,12 @@ import { useBranding } from '@/contexts/BrandingContext'
 import ImageUploader from './ImageUploader'
 
 interface Props {
+  schoolId: number
   open: boolean
   onClose: () => void
 }
 
-export default function SchoolBrandingEditor({ open, onClose }: Props) {
+export default function SchoolBrandingEditor({ schoolId, open, onClose }: Props) {
   const { schoolBranding, setSchoolBranding } = useBranding()
 
   const [iconUrl, setIconUrl]     = useState<string | null>(schoolBranding.icon_url ?? null)
@@ -42,6 +43,8 @@ export default function SchoolBrandingEditor({ open, onClose }: Props) {
             shape="square"
             value={iconUrl}
             onChange={setIconUrl}
+            resourceType="school_icon"
+            resourceId={schoolId}
           />
           <ImageUploader
             label="Banner"
@@ -49,6 +52,8 @@ export default function SchoolBrandingEditor({ open, onClose }: Props) {
             shape="banner"
             value={bannerUrl}
             onChange={setBannerUrl}
+            resourceType="school_banner"
+            resourceId={schoolId}
           />
         </div>
 

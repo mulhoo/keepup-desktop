@@ -45,6 +45,8 @@ export default function SportBrandingEditor({ sportId, sportName, open, onClose 
             shape="square"
             value={iconUrl}
             onChange={setIconUrl}
+            resourceType="sport_emoji"
+            resourceId={sportId}
           />
           <ImageUploader
             label="Banner"
@@ -52,6 +54,8 @@ export default function SportBrandingEditor({ sportId, sportName, open, onClose 
             shape="banner"
             value={bannerUrl}
             onChange={setBannerUrl}
+            resourceType="sport_banner"
+            resourceId={sportId}
           />
         </div>
 

@@ -309,7 +309,7 @@ export default function Settings() {
             <ImageIcon className="w-4 h-4" />
             Edit school branding
           </Button>
-          <SchoolBrandingEditor open={brandingOpen} onClose={() => setBrandingOpen(false)} />
+          <SchoolBrandingEditor schoolId={1} open={brandingOpen} onClose={() => setBrandingOpen(false)} />
         </section>
       )}
 
