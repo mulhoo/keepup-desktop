@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { LinkedAccount } from '@/api/linkedAccounts'
+import { api } from '@/api/client'
 
 // key format: null = base account, "linked-{id}" = a linked account by id
 const STORAGE_KEY = 'keepup_default_profile_key'
@@ -26,6 +27,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.setItem(STORAGE_KEY, key)
     }
+    api.patch('/demo/me/preferences', { preferences: { default_district_key: key ?? '' } }).catch(() => {})
   }
 
   return (

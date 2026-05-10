@@ -1,75 +1,19 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { atLeast } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
-import { Palette, ImageIcon, ChevronRight, Trophy, Link2, Link2Off, Send, X, Building2 } from 'lucide-react'
+import { Palette, ImageIcon, Link2, Link2Off, Send, X } from 'lucide-react'
 import ThemeEditor from '@/components/theme/ThemeEditor'
 import SchoolBrandingEditor from '@/components/branding/SchoolBrandingEditor'
 import { useBranding } from '@/contexts/BrandingContext'
-import { fetchSports, DEMO_COACH_SPORTS } from '@/api/sports'
+import { useAccessibility, type FontSize } from '@/contexts/AccessibilityContext'
+import { cn } from '@/lib/utils'
 
-function schoolAbbr(name: string) {
-  return name.split(/\s+/).filter(w => /^[A-Z]/.test(w)).map(w => w[0]).slice(0, 4).join('')
-}
+
 import { fetchLinkedAccounts, fetchPendingInvitations, DEMO_BASE, type LinkedAccount, type PendingInvitation } from '@/api/linkedAccounts'
 import { useProfile, linkedAccountKey } from '@/contexts/ProfileContext'
 
-function MyTeamsSection({ demoRole }: { demoRole: string | null }) {
-  const { data: sports = [] } = useQuery({
-    queryKey: ['sports'],
-    queryFn: () => fetchSports(),
-  })
-
-  const schoolYears = [...new Set(sports.map(s => s.school_year))].sort().reverse()
-  const currentYear = schoolYears[0] ?? ''
-
-  const mySports = sports
-    .filter(s => s.school_year === currentYear && DEMO_COACH_SPORTS[demoRole ?? '']?.[s.id] !== undefined)
-    .sort((a, b) => {
-      const ra = DEMO_COACH_SPORTS[demoRole ?? '']?.[a.id] === 'head_coach' ? 0 : 1
-      const rb = DEMO_COACH_SPORTS[demoRole ?? '']?.[b.id] === 'head_coach' ? 0 : 1
-      return ra - rb || a.name.localeCompare(b.name)
-    })
-
-  if (mySports.length === 0) return null
-
-  return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-sm font-semibold">My Teams</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Your current rosters for {currentYear}.</p>
-      </div>
-      <div className="space-y-2">
-        {mySports.map(sport => (
-          <Link
-            key={sport.id}
-            to={`/dashboard/team/${sport.id}`}
-            className="flex items-center gap-3 p-4 rounded-lg border bg-card hover:bg-muted/40 transition-colors group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-none">
-              <Trophy className="w-4 h-4 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{sport.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                {DEMO_COACH_SPORTS[demoRole ?? '']?.[sport.id] === 'head_coach' ? 'Head Coach' : 'Asst. Coach'}
-                <span className="text-muted-foreground/40">·</span>
-                {sport.athlete_count} athletes
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium bg-muted text-muted-foreground px-1 py-0.5 rounded">
-                  <Building2 className="w-2.5 h-2.5" />
-                  {schoolAbbr(sport.school_name)}
-                </span>
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-none" />
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
 
 function DefaultProfileSection({ demoRole }: { demoRole: string | null }) {
   const { defaultKey, setDefaultKey } = useProfile()
@@ -270,9 +214,55 @@ function LinkedAccountsSection({ demoRole }: { demoRole: string | null }) {
   )
 }
 
+const FONT_SIZES: FontSize[] = ['small', 'medium', 'large']
+const FONT_SIZE_LABELS: Record<FontSize, string> = {
+  small:  'Small',
+  medium: 'Medium',
+  large:  'Large',
+}
+const FONT_SIZE_SAMPLE_PX: Record<FontSize, number> = {
+  small: 13, medium: 15, large: 17,
+}
+
+function FontSizeCards({ value, onChange }: { value: FontSize; onChange: (v: FontSize) => void }) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {FONT_SIZES.map(size => {
+        const selected = value === size
+        return (
+          <button
+            key={size}
+            onClick={() => onChange(size)}
+            className={cn(
+              'flex flex-col items-center gap-2 py-3 px-2 rounded-lg border transition-colors',
+              selected
+                ? 'border-primary bg-primary/5'
+                : 'border-border bg-card hover:bg-muted/40'
+            )}
+          >
+            <span
+              className={cn('font-semibold leading-none', selected ? 'text-primary' : 'text-foreground')}
+              style={{ fontSize: `${FONT_SIZE_SAMPLE_PX[size]}px` }}
+            >
+              Aa
+            </span>
+            <span
+              className={cn(selected ? 'text-primary font-semibold' : 'text-muted-foreground')}
+              style={{ fontSize: '10px' }}
+            >
+              {FONT_SIZE_LABELS[size]}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function Settings() {
   const { demoRole } = useAuth()
   const { schoolBranding } = useBranding()
+  const { prefs, setFontSize } = useAccessibility()
   const isCoach = demoRole === 'head_coach' || demoRole === 'assistant_coach'
 
   const canTheme    = atLeast(demoRole, 'athletic_director') && demoRole !== 'district_admin'
@@ -288,7 +278,6 @@ export default function Settings() {
         <p className="text-sm text-muted-foreground mt-1">Manage your school configuration.</p>
       </div>
 
-      {isCoach && <MyTeamsSection demoRole={demoRole} />}
       {isCoach && <DefaultProfileSection demoRole={demoRole} />}
       {isCoach && <LinkedAccountsSection demoRole={demoRole} />}
 
@@ -339,6 +328,20 @@ export default function Settings() {
           <ThemeEditor open={themeOpen} onClose={() => setThemeOpen(false)} />
         </section>
       )}
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold">Accessibility</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Customize how KeepUp looks and feels for you. These preferences are saved to your account.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Text size</p>
+          <FontSizeCards value={prefs.font_size} onChange={setFontSize} />
+        </div>
+      </section>
 
       <section className="space-y-3">
         <div>

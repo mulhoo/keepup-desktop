@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { BrandingProvider } from '@/contexts/BrandingContext'
 import { ProfileProvider } from '@/contexts/ProfileContext'
+import { UserPhotoProvider } from '@/contexts/UserPhotoContext'
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext'
 import AppShell from '@/components/layout/AppShell'
 import Login from '@/pages/Login'
 import Overview from '@/pages/Overview'
@@ -14,6 +16,7 @@ import Settings from '@/pages/Settings'
 import AuditLog from '@/pages/AuditLog'
 import Import from '@/pages/Import'
 import TeamRoster from '@/pages/TeamRoster'
+import UserProfile from '@/pages/UserProfile'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +51,7 @@ function AppRoutes() {
         <Route path="audit-log"     element={<AuditLog />} />
         <Route path="import"        element={<Import />} />
         <Route path="team/:sportId" element={<TeamRoster />} />
+        <Route path="profile"       element={<UserProfile />} />
       </Route>
       <Route
         path="*"
@@ -63,9 +67,13 @@ export default function App() {
       <AuthProvider>
         <BrandingProvider>
           <ProfileProvider>
+            <UserPhotoProvider>
+            <AccessibilityProvider>
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>
+            </AccessibilityProvider>
+            </UserPhotoProvider>
           </ProfileProvider>
         </BrandingProvider>
       </AuthProvider>
