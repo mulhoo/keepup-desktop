@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { Upload, Trophy, Users, CheckCircle2, X, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/hooks/useAuth'
 import { fetchSports } from '@/api/sports'
 import { cn } from '@/lib/utils'
 
