@@ -117,9 +117,6 @@ type ImportType = 'roster_full' | 'basic_student'
 type Step = 'type' | 'upload' | 'preview' | 'done'
 
 export default function Import() {
-  const { demoRole } = useAuth()
-
-
   const { data: sports = [] } = useQuery({
     queryKey: ['sports'],
     queryFn: () => fetchSports(),
