@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Hajos light theme: white + navy ── */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 215 65% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 65% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 65% 14%;
+
+    --primary: 215 62% 26%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 213 50% 93%;
+    --secondary-foreground: 215 62% 26%;
+
+    --muted: 212 40% 95%;
+    --muted-foreground: 215 28% 46%;
+
+    --accent: 189 95% 43%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 32% 88%;
+    --input: 215 32% 88%;
+    --ring: 189 95% 43%;
+
+    --radius: 0.5rem;
+  }
+
+  /* ── Hajos dark theme: deep navy + cyan ── */
+  .dark {
+    --background: 215 65% 7%;
+    --foreground: 210 40% 96%;
+
+    --card: 215 58% 11%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 213 50% 13%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 188 85% 52%;
+    --primary-foreground: 215 65% 7%;
+
+    --secondary: 215 55% 15%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 215 55% 13%;
+    --muted-foreground: 215 22% 60%;
+
+    --accent: 188 85% 52%;
+    --accent-foreground: 215 65% 7%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 42% 20%;
+    --input: 215 42% 20%;
+    --ring: 188 85% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "es": {
+    "translation": {
+      "app": {
+        "name": "",
+        "tagline": ""
+      },
+      "nav": {
+        "overview": "",
+        "reviews": "",
+        "announcements": "",
+        "sports": "",
+        "settings": "",
+        "signOut": ""
+      },
+      "roles": {
+        "district_admin": "",
+        "athletic_director": "",
+        "head_coach": "",
+        "assistant_coach": "",
+        "student_captain": "",
+        "student": "",
+        "parent": ""
+      },
+      "login": {
+        "tabDemo": "",
+        "tabSignIn": "",
+        "demoTitle": "",
+        "demoDescription": "",
+        "signInTitle": "",
+        "signInDescription": "",
+        "email": "",
+        "emailPlaceholder": "",
+        "password": "",
+        "signingIn": "",
+        "signIn": "",
+        "demoNotice": ""
+      },
+      "mobileOnly": {
+        "heading": "",
+        "description": ""
+      },
+      "parent": {
+        "heading": "",
+        "description": "",
+        "placeholder": ""
+      },
+      "overview": {
+        "heading": "",
+        "welcomeBack": "",
+        "viewingAs": "",
+        "pendingReviews": "",
+        "activeSports": "",
+        "members": "",
+        "activityPlaceholder": ""
+      },
+      "reviews": {
+        "heading": "",
+        "description": "",
+        "empty": ""
+      },
+      "announcements": {
+        "heading": "",
+        "description": "",
+        "placeholder": ""
+      },
+      "sports": {
+        "heading": "",
+        "description": "",
+        "placeholder": ""
+      },
+      "settings": {
+        "heading": "",
+        "description": "",
+        "theme": {
+          "heading": "",
+          "description": "",
+          "editButton": ""
+        },
+        "account": {
+          "heading": "",
+          "description": "",
+          "placeholder": ""
+        }
+      },
+      "themeEditor": {
+        "title": "",
+        "description": "",
+        "namePlaceholder": {
+          "dark": "",
+          "light": ""
+        },
+        "nameLabel": "",
+        "variantLabel": "",
+        "dark": "",
+        "light": "",
+        "colorSlotsHeading": "",
+        "previewHeading": "",
+        "cancel": "",
+        "save": ""
+      },
+      "colorSlots": {
+        "color_background": "",
+        "color_surface": "",
+        "color_surface_variant": "",
+        "color_border": "",
+        "color_primary": "",
+        "color_accent": "",
+        "color_text_primary": "",
+        "color_text_secondary": "",
+        "color_text_on_primary": "",
+        "color_text_on_accent": ""
+      }
+    }
+  }
+}

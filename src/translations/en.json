@@ -1,0 +1,120 @@
+{
+  "en": {
+    "translation": {
+      "app": {
+        "name": "KeepUp",
+        "tagline": "Communication student-athletes will actually use, with the protection schools need."
+      },
+      "nav": {
+        "overview": "Overview",
+        "reviews": "Reviews",
+        "announcements": "Announcements",
+        "sports": "Sports",
+        "schools": "Schools",
+        "settings": "Settings",
+        "auditLog": "Audit Log",
+        "import": "Import",
+        "signOut": "Sign out"
+      },
+      "roles": {
+        "district_admin": "District Admin",
+        "school_admin": "School Admin",
+        "athletic_director": "Athletic Director",
+        "head_coach": "Head Coach",
+        "assistant_coach": "Assistant Coach",
+        "student_captain": "Student Captain",
+        "student": "Student",
+        "parent": "Parent"
+      },
+      "login": {
+        "tabDemo": "Try a role",
+        "tabSignIn": "Sign in",
+        "demoTitle": "Explore the demo",
+        "demoDescription": "Pick a role to see KeepUp from their perspective.",
+        "signInTitle": "Welcome back",
+        "signInDescription": "Sign in to your account to continue.",
+        "email": "Email",
+        "emailPlaceholder": "you@school.edu",
+        "password": "Password",
+        "signingIn": "Signing in…",
+        "signIn": "Sign in",
+        "demoNotice": "Demo mode — no real data, safe to explore"
+      },
+      "mobileOnly": {
+        "heading": "Use the KeepUp app",
+        "description": "The desktop platform is for coaches and administrators. Students, parents, and captains access KeepUp on mobile."
+      },
+      "parent": {
+        "heading": "Family",
+        "description": "Your children and their sports.",
+        "placeholder": "Children and sport memberships coming soon."
+      },
+      "overview": {
+        "heading": "Overview",
+        "welcomeBack": "Welcome back, {{name}}.",
+        "viewingAs": "Viewing as {{role}}.",
+        "pendingReviews": "Pending Reviews",
+        "activeSports": "Active Sports",
+        "members": "Members",
+        "activityPlaceholder": "Activity feed coming soon."
+      },
+      "reviews": {
+        "heading": "Message Reviews",
+        "description": "Flagged messages awaiting review.",
+        "empty": "No flagged messages."
+      },
+      "announcements": {
+        "heading": "Announcements",
+        "description": "Send a message to all sports at once.",
+        "placeholder": "Announcement composer coming soon."
+      },
+      "sports": {
+        "heading": "Sports",
+        "description": "Teams and rosters at your school.",
+        "placeholder": "Sports list coming soon."
+      },
+      "settings": {
+        "heading": "Settings",
+        "description": "Manage your school configuration.",
+        "theme": {
+          "heading": "School Theme",
+          "description": "Customize your school's colors for the mobile app. You can set one dark and one light theme.",
+          "editButton": "Edit school theme"
+        },
+        "account": {
+          "heading": "Account",
+          "description": "Manage your account details.",
+          "placeholder": "Account settings coming soon."
+        }
+      },
+      "themeEditor": {
+        "title": "School Theme",
+        "description": "Customize your school's colors for the mobile app. You can set one dark theme and one light theme.",
+        "namePlaceholder": {
+          "dark": "e.g. Kangs Dark",
+          "light": "e.g. Kangs Light"
+        },
+        "nameLabel": "Theme name",
+        "variantLabel": "Variant",
+        "dark": "dark",
+        "light": "light",
+        "colorSlotsHeading": "Color slots",
+        "previewHeading": "Preview",
+        "cancel": "Cancel",
+        "save": "Save theme"
+      },
+      "colorSlots": {
+        "color_background": "Background",
+        "color_surface": "Surface",
+        "color_surface_variant": "Surface Variant",
+        "color_border": "Border",
+        "color_primary": "Primary",
+        "color_accent": "Accent",
+        "color_text_primary": "Text Primary",
+        "color_text_secondary": "Text Secondary",
+        "color_text_on_primary": "On Primary",
+        "color_text_on_accent": "On Accent"
+      }
+    }
+  }
+}
