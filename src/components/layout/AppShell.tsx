@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldAlert, Megaphone, Trophy, Building2, Settings, LogOut,
-  Smartphone, Sun, Moon, ClipboardList, Upload,
+  Smartphone, Sun, Moon, ClipboardList, Upload, UsersRound,
   PanelLeftClose, PanelLeftOpen, ArrowLeftRight,
   Waves, CircleDot, Activity, Flag, Shield, Star, Sparkles, Wind, Target,
 } from 'lucide-react'
@@ -243,6 +243,7 @@ const NAV_CONFIG: { to: string; key: string; icon: React.ElementType; min?: stri
   { to: '/dashboard/announcements', key: 'nav.announcements', icon: Megaphone,       min: 'assistant_coach'   },
   { to: '/dashboard/sports',        key: 'nav.sports',        icon: Trophy,          min: 'athletic_director' },
   { to: '/dashboard/schools',       key: 'nav.schools',       icon: Building2,       min: 'district_admin'    },
+  { to: '/dashboard/staff',         key: 'nav.staff',         icon: UsersRound,      min: 'athletic_director' },
   { to: '/dashboard/audit-log',     key: 'nav.auditLog',      icon: ClipboardList,   min: 'athletic_director' },
   { to: '/dashboard/import',        key: 'nav.import',        icon: Upload,          roles: ['head_coach', 'athletic_director'] },
   { to: '/dashboard/settings',      key: 'nav.settings',      icon: Settings,        min: 'assistant_coach'   },

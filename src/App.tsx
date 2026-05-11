@@ -16,6 +16,7 @@ import Schools from '@/pages/Schools'
 import Settings from '@/pages/Settings'
 import AuditLog from '@/pages/AuditLog'
 import Import from '@/pages/Import'
+import Staff from '@/pages/Staff'
 import TeamRoster from '@/pages/TeamRoster'
 import UserProfile from '@/pages/UserProfile'
 
@@ -51,6 +52,7 @@ function AppRoutes() {
         <Route path="settings"      element={<Settings />} />
         <Route path="audit-log"     element={<AuditLog />} />
         <Route path="import"        element={<Import />} />
+        <Route path="staff"         element={<Staff />} />
         <Route path="team/:sportId" element={<TeamRoster />} />
         <Route path="profile"       element={<UserProfile />} />
       </Route>
