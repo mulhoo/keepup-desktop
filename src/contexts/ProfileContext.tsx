@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import type { LinkedAccount } from '@/api/linkedAccounts'
 import { api } from '@/api/client'
 
@@ -10,6 +10,7 @@ interface ProfileContextValue {
   defaultKey: string | null
   switchToProfile: (account: LinkedAccount | null) => void
   setDefaultKey: (key: string | null) => void
+  resetProfile: () => void
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null)
@@ -30,8 +31,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     api.patch('/demo/me/preferences', { preferences: { default_district_key: key ?? '' } }).catch(() => {})
   }
 
+  const resetProfile = useCallback(() => {
+    setActiveProfile(null)
+    setDefaultKeyState(null)
+    localStorage.removeItem(STORAGE_KEY)
+  }, [])
+
   return (
-    <ProfileContext.Provider value={{ activeProfile, defaultKey, switchToProfile: setActiveProfile, setDefaultKey }}>
+    <ProfileContext.Provider value={{ activeProfile, defaultKey, switchToProfile: setActiveProfile, setDefaultKey, resetProfile }}>
       {children}
     </ProfileContext.Provider>
   )

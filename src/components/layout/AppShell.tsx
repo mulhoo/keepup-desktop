@@ -6,7 +6,7 @@ import {
   PanelLeftClose, PanelLeftOpen, ArrowLeftRight,
   Waves, CircleDot, Activity, Flag, Shield, Star, Sparkles, Wind, Target,
 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { logout } from '@/api/auth'
 import { atLeast } from '@/lib/roles'
@@ -252,7 +252,10 @@ const NAV_CONFIG: { to: string; key: string; icon: React.ElementType; min?: stri
 
 export default function AppShell() {
   const { user, demoRole, logout: clearAuth } = useAuth()
-  const { activeProfile } = useProfile()
+  const { activeProfile, resetProfile } = useProfile()
+  const { resetBranding } = useBranding()
+  const { resetPhoto } = useUserPhoto()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { t } = useTranslationHelpers()
   const { isDark, toggle: toggleTheme } = useTheme()
@@ -270,6 +273,10 @@ export default function AppShell() {
   async function handleLogout() {
     await logout()
     clearAuth()
+    resetProfile()
+    resetBranding()
+    resetPhoto()
+    queryClient.clear()
     navigate('/login')
   }
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 
 export interface SportBranding { icon_url?: string; banner_url?: string }
 export interface SchoolBranding { icon_url?: string; banner_url?: string }
@@ -8,6 +8,7 @@ interface BrandingContextValue {
   setSportBranding: (id: number, b: SportBranding) => void
   schoolBranding: SchoolBranding
   setSchoolBranding: (b: SchoolBranding) => void
+  resetBranding: () => void
 }
 
 const BrandingContext = createContext<BrandingContextValue | null>(null)
@@ -20,8 +21,13 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   const setSportBranding = (id: number, b: SportBranding) =>
     setSportBrandings(prev => ({ ...prev, [id]: { ...prev[id], ...b } }))
 
+  const resetBranding = useCallback(() => {
+    setSportBrandings({})
+    setSchoolBranding({})
+  }, [])
+
   return (
-    <BrandingContext.Provider value={{ getSportBranding, setSportBranding, schoolBranding, setSchoolBranding }}>
+    <BrandingContext.Provider value={{ getSportBranding, setSportBranding, schoolBranding, setSchoolBranding, resetBranding }}>
       {children}
     </BrandingContext.Provider>
   )
