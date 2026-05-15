@@ -14,9 +14,9 @@ function emit(item: ToastItem) {
   listeners.forEach(l => l(item))
 }
 
-export function subscribeToast(listener: Listener) {
+export function subscribeToast(listener: Listener): () => void {
   listeners.add(listener)
-  return () => listeners.delete(listener)
+  return () => { listeners.delete(listener) }
 }
 
 export const toast = {

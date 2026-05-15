@@ -98,9 +98,9 @@ export async function fetchAdViewRequests(): Promise<AdViewRequest[]> {
 }
 
 export async function approveViewRequest(id: number): Promise<AdViewRequest> {
-  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/approve`)
+  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/approve`, {})
 }
 
 export async function denyViewRequest(id: number): Promise<AdViewRequest> {
-  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/deny`)
+  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/deny`, {})
 }

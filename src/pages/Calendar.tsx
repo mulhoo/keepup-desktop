@@ -121,7 +121,7 @@ export default function Calendar() {
           ) : dateKeys.length === 0 ? (
             <div className="rounded-lg border border-dashed py-12 text-center">
               <p className="text-sm text-muted-foreground">
-                No events in {viewMode === 'week' ? navLabel : format(viewDate, 'MMMM yyyy')}
+                No events in {format(viewDate, 'MMMM yyyy')}
                 {sportFilter.size  > 0 ? ` for ${[...sportFilter].join(', ')}`  : ''}
                 {schoolFilter.size > 0 ? ` at ${[...schoolFilter].join(', ')}` : ''}.
               </p>

@@ -300,7 +300,7 @@ export default function MajorCompetitions() {
         starts_at:  `${meet.date}T08:00:00`,
         ends_at:    `${meet.date}T18:00:00`,
         notes: '', opponent: '', status: 'scheduled',
-      }, false)
+      })
       created.push({ sportId: team.id, eventId: event.id })
     }
     qc.invalidateQueries({ queryKey: ['schedule'] })

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { format, isSameMonth, parseISO } from 'date-fns'
+import { format, isSameMonth, parseISO, addMonths, subMonths } from 'date-fns'
 import { Plus } from 'lucide-react'
 import { fetchSportDetail, sportDisplayName } from '@/api/sports'
 import { fetchCalendarEvents, type CalendarEvent } from '@/api/calendar'
@@ -12,7 +12,7 @@ import { MonthGrid } from '@/components/calendar/MonthGrid'
 import { EventFormDialog, DeleteConfirm } from '@/components/calendar/EventFormDialog'
 import { ViewToggle } from '@/components/ui/ViewToggle'
 
-type ViewMode = 'list' | 'grid'
+type ViewMode = 'list' | 'week' | 'grid'
 
 export default function TeamCalendar() {
   const { sportId } = useParams<{ sportId: string }>()
@@ -87,7 +87,11 @@ export default function TeamCalendar() {
         </div>
       </div>
 
-      <MonthNav month={viewMonth} onChange={setViewMonth} />
+      <MonthNav
+        label={format(viewMonth, 'MMMM yyyy')}
+        onPrev={() => setViewMonth(m => subMonths(m, 1))}
+        onNext={() => setViewMonth(m => addMonths(m, 1))}
+      />
 
       {isLoading ? (
         <div className="space-y-3">

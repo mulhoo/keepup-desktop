@@ -267,7 +267,7 @@ function RegenerateDialog({ venue, venues, onClose, onDone }: {
     const coaches = [...coachMap.values()]
     setNotifiedCount(coaches.length)
     setPhase('notifying')
-    if (coaches.length > 0) await sendEventNotifications(0, coaches)
+    if (coaches.length > 0) await sendEventNotifications(0)
 
     qc.invalidateQueries({ queryKey: ['commissioner-events'] })
     setPhase('done')

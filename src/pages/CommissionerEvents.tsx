@@ -91,7 +91,7 @@ function EditDialog({
     const updated = await updateCommissionerEvent(event.id, input)
     if (notifyWorthy) {
       setNotifyState('notifying')
-      await sendEventNotifications(event.id, coaches)
+      await sendEventNotifications(event.id)
     }
     setNotifyState('done')
     onSaved(updated)

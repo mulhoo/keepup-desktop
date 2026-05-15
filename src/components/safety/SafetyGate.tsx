@@ -80,7 +80,7 @@ function SafetyAuthForm({ userEmail }: { userEmail?: string }) {
         enterSafetySession()
         return
       }
-      setSentEmail(res.email)
+      setSentEmail(res.email ?? '')
       setStep('code')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to send code. Check your password.')

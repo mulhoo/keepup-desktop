@@ -73,7 +73,7 @@ export const reviewMessage = (id: number, action_taken: 'approved' | 'rejected')
   api.patch<ReviewResult>(`/demo/flagged_messages/${id}/review`, { action_taken })
 
 export const upholdChallenge = (id: number) =>
-  api.patch<ChallengeResult>(`/demo/message-challenges/${id}/uphold`)
+  api.patch<ChallengeResult>(`/demo/message-challenges/${id}/uphold`, {})
 
 export const denyChallenge = (id: number) =>
-  api.patch<ChallengeResult>(`/demo/message-challenges/${id}/deny`)
+  api.patch<ChallengeResult>(`/demo/message-challenges/${id}/deny`, {})

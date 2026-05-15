@@ -155,7 +155,7 @@ function SportRow({ current, past }: { current: Sport; past: Sport[] }) {
 function SchoolPanel({ school, onClose }: { school: School; onClose: () => void }) {
   const { data: allSports, isLoading } = useQuery({
     queryKey: ['sports', school.id],
-    queryFn: () => fetchSports(school.id),
+    queryFn: () => fetchSports(),
   })
 
   const schoolYears = allSports

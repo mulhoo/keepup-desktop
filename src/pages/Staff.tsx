@@ -294,8 +294,8 @@ function InviteModal({
       patchStaffCache(queryClient, prev => [...prev, created])
       setSent(true)
       toast.success(`Invitation sent to ${email}.`)
-    } catch (e: Error) {
-      const msg = e.message ?? 'Something went wrong.'
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Something went wrong.'
       setError(msg)
       toast.error(msg)
     } finally {
@@ -496,8 +496,8 @@ function EditModal({
       }
       toast.success('Changes saved.')
       onClose()
-    } catch (e: Error) {
-      toast.error(e.message ?? 'Failed to save changes.')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save changes.')
     } finally {
       setBusy(false)
     }

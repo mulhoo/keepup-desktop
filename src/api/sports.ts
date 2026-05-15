@@ -20,6 +20,7 @@ export interface SportMember {
   level?:        string | null
   position?:     string | null
   is_captain?:   boolean
+  graduated?:    boolean
   parents?:      ParentContact[]
 }
 
