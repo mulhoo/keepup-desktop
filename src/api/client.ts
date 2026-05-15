@@ -6,26 +6,12 @@ const DISTRICT_SUBDOMAIN = parseDistrictSubdomain()
 
 export { DEMO_MODE }
 
-function getToken(): string | null {
-  return localStorage.getItem('keepup_token')
-}
-
-export function setToken(token: string) {
-  localStorage.setItem('keepup_token', token)
-}
-
-export function clearToken() {
-  localStorage.removeItem('keepup_token')
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken()
-
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(DISTRICT_SUBDOMAIN ? { 'X-District-Subdomain': DISTRICT_SUBDOMAIN } : {}),
       ...options.headers,
     },
@@ -36,6 +22,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(res.status, body?.error ?? 'Request failed')
   }
 
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 

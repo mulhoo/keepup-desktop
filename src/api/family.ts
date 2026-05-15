@@ -30,84 +30,77 @@ export interface Child {
   sports: ChildSport[]
 }
 
-const MOCK_FAMILY: Child[] = [
-  {
-    id: 1,
-    first_name: 'Jordan',
-    last_name: 'Lee',
-    sports: [
-      {
-        season_id: 1,
-        sport_name: 'Girls Swimming',
-        level: 'Varsity',
-        school_name: 'Alfred High School',
-        season_name: 'Swimming 2025-26',
-        athletic_season: 'fall',
-        coaches: [
-          { name: 'Chris Nguyen', role: 'head_coach' },
-          { name: 'Dana Patel',   role: 'assistant_coach' },
-        ],
-        recent_announcements: [
-          {
-            id: 1,
-            content: 'Welcome to the 2025-26 swim season! First practice is Monday at 6am. Bring your own cap and goggles.',
-            sender_name: 'Chris Nguyen',
-            sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 2,
-            content: 'Reminder: all athletes need updated physical forms submitted to the front office before Friday.',
-            sender_name: 'Chris Nguyen',
-            sent_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 3,
-            content: 'Meet schedule for November is posted on the school athletics page. First away meet is Nov 14 @ Baldwin — bus departs at 3:30pm sharp.',
-            sender_name: 'Dana Patel',
-            sent_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    first_name: 'Casey',
-    last_name: 'Lee',
-    sports: [
-      {
-        season_id: 2,
-        sport_name: 'Boys Water Polo',
-        level: 'Varsity',
-        school_name: 'Alfred High School',
-        season_name: 'Water Polo 2025-26',
-        athletic_season: 'spring',
-        coaches: [
-          { name: 'Sam Rivera', role: 'head_coach' },
-        ],
-        recent_announcements: [
-          {
-            id: 4,
-            content: 'Welcome to the water polo season! Cap fittings are Tuesday after school in the pool office.',
-            sender_name: 'Sam Rivera',
-            sent_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 5,
-            content: 'First scrimmage is March 14th at home. Parents are welcome to attend.',
-            sender_name: 'Sam Rivera',
-            sent_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ],
-      },
-    ],
-  },
-]
-
 export async function fetchFamily(): Promise<Child[]> {
-  await new Promise(r => setTimeout(r, 150))
-  return MOCK_FAMILY
+  return api.get<Child[]>('/demo/family')
 }
 
-export const fetchFamilyFromApi = () =>
-  api.get<Child[]>('/family')
+// All non-child participants are anonymized server-side to "Student".
+// These types intentionally carry no identifying information for other parties.
+
+export interface ParentMessage {
+  id:       number
+  content:  string
+  sender:   string
+  sent_at:  string
+  is_child: boolean
+}
+
+export type ConversationAccess =
+  | { type: 'staff' }
+  | { type: 'flagged' }
+  | { type: 'approved'; expires_at: string; approved_by: string | null }
+  | { type: 'locked' }
+
+export interface ParentConversation {
+  id:                number
+  other_participant: { name: string; staff_role: string | null }
+  access:            ConversationAccess
+  last_message:      ParentMessage | null
+  messages:          ParentMessage[]
+}
+
+export interface AccessRequest {
+  id:          number
+  status:      'pending' | 'approved' | 'denied'
+  child_id:    number
+  expires_at:  string | null
+  reviewed_by: string | null
+}
+
+export interface ChildChats {
+  child_id:         number
+  child_name:       string
+  child_first_name: string
+  access_request:   AccessRequest | null
+  conversations:    ParentConversation[]
+}
+
+export interface AdViewRequest {
+  id:          number
+  status:      'pending' | 'approved' | 'denied'
+  parent_name: string
+  child_name:  string
+  reason:      string
+  created_at:  string
+  expires_at:  string | null
+}
+
+export async function fetchFamilyChats(): Promise<ChildChats[]> {
+  return api.get<ChildChats[]>('/demo/family/chats')
+}
+
+export async function createViewRequest(child_id: number, reason: string): Promise<AccessRequest> {
+  return api.post<AccessRequest>('/demo/parent-view-requests', { child_id, reason })
+}
+
+export async function fetchAdViewRequests(): Promise<AdViewRequest[]> {
+  return api.get<AdViewRequest[]>('/demo/parent-view-requests')
+}
+
+export async function approveViewRequest(id: number): Promise<AdViewRequest> {
+  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/approve`)
+}
+
+export async function denyViewRequest(id: number): Promise<AdViewRequest> {
+  return api.patch<AdViewRequest>(`/demo/parent-view-requests/${id}/deny`)
+}

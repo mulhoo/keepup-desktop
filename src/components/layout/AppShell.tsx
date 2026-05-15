@@ -1,275 +1,146 @@
-import { useState, useEffect, useRef } from 'react'
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchAdViewRequests } from '@/api/family'
+import { fetchFlaggedMessages } from '@/api/flaggedMessages'
+import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldAlert, Megaphone, Trophy, Building2, Settings, LogOut,
-  Smartphone, Sun, Moon, ClipboardList, Upload, UsersRound,
-  PanelLeftClose, PanelLeftOpen, ArrowLeftRight,
-  Waves, CircleDot, Activity, Flag, Shield, Star, Sparkles, Wind, Target,
+  Sun, Moon, ClipboardList, Upload, UsersRound, BarChart2, Flag, Shield, MessageSquare,
+  PanelLeftClose, PanelLeftOpen, CalendarDays, Sparkles, ChevronDown, CalendarCheck, MapPinned, Cpu,
+  Home, Lock, InboxIcon,
 } from 'lucide-react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
-import { logout } from '@/api/auth'
+import { logout, resetDemo, DEMO_ROLES } from '@/api/auth'
 import { atLeast } from '@/lib/roles'
 import { useTranslationHelpers } from '@/lib/i18n'
 import { useTheme } from '@/hooks/useTheme'
-import { useBranding } from '@/contexts/BrandingContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useUserPhoto } from '@/contexts/UserPhotoContext'
-import { fetchSports, DEMO_COACH_SPORTS } from '@/api/sports'
-import { fetchLinkedAccounts, DEMO_BASE, type LinkedAccount } from '@/api/linkedAccounts'
-import { linkedAccountKey } from '@/contexts/ProfileContext'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-
+import { useBranding } from '@/contexts/BrandingContext'
+import { DEMO_BASE } from '@/api/linkedAccounts'
+import { DistrictSwitcher } from './DistrictSwitcher'
+import { SportRail } from './SportRail'
+import { NotificationBell } from './NotificationBell'
 import { cn } from '@/lib/utils'
-import Family from '@/pages/Family'
+import GemmaDemo from '@/pages/GemmaDemo'
 
-function schoolAbbr(name: string) {
-  return name.split(/\s+/).filter(w => /^[A-Z]/.test(w)).map(w => w[0]).slice(0, 4).join('')
-}
-
-function sportIcon(name: string): React.ElementType {
-  const n = name.toLowerCase()
-  if (n.includes('swim'))                           return Waves
-  if (n.includes('polo'))                           return Waves
-  if (n.includes('basket'))                         return CircleDot
-  if (n.includes('soccer') || n.includes('futbol')) return Target
-  if (n.includes('football'))                       return Shield
-  if (n.includes('track') || n.includes('field') || n.includes('cross country')) return Activity
-  if (n.includes('tennis'))                         return CircleDot
-  if (n.includes('volley'))                         return CircleDot
-  if (n.includes('base') || n.includes('soft'))     return CircleDot
-  if (n.includes('lacrosse'))                       return Target
-  if (n.includes('wrestl'))                         return Shield
-  if (n.includes('golf'))                           return Flag
-  if (n.includes('gymnast'))                        return Star
-  if (n.includes('cheer'))                          return Sparkles
-  if (n.includes('wind') || n.includes('sail'))     return Wind
-  return Trophy
-}
-
-// ── District switcher (top bar) ───────────────────────────────────────────────
-
-function DistrictSwitcher({ demoRole }: { demoRole: string | null }) {
-  const [open, setOpen] = useState(false)
-  const { activeProfile, defaultKey, switchToProfile } = useProfile()
-  const isCoach = demoRole === 'head_coach' || demoRole === 'assistant_coach'
-  const initializedRef = useRef(false)
-
-  const { data: linked = [] } = useQuery({
-    queryKey: ['linked-accounts', demoRole],
-    queryFn: () => fetchLinkedAccounts(demoRole ?? ''),
-    enabled: isCoach,
-  })
-
-  useEffect(() => {
-    if (initializedRef.current || !linked.length || !defaultKey) return
-    initializedRef.current = true
-    const id = parseInt(defaultKey.replace('linked-', ''))
-    const match = linked.find((a: LinkedAccount) => a.id === id)
-    if (match) switchToProfile(match)
-  }, [linked])
-
-  const base = DEMO_BASE[demoRole ?? '']
-  const baseDistrict = base?.district_name ?? ''
-  const accepted = linked.filter((a: LinkedAccount) => a.status === 'accepted')
-  const crossDistrict = accepted.filter((a: LinkedAccount) => a.district_name !== baseDistrict)
-
-  if (!isCoach || crossDistrict.length === 0) return null
-
-  type Option = { key: string | null; schoolName: string; district: string; account: LinkedAccount | null; role: string }
-  const options: Option[] = [
-    { key: null, schoolName: base?.school_name ?? 'Home', district: baseDistrict, account: null, role: demoRole ?? '' },
-    ...crossDistrict.map((a: LinkedAccount) => ({
-      key: linkedAccountKey(a), schoolName: a.school_name, district: a.district_name, account: a, role: a.role,
-    })),
-  ]
-
-  const activeKey = activeProfile ? linkedAccountKey(activeProfile) : null
-
+function DemoBanner({ label, onEnd }: { label?: string; onEnd: () => void }) {
   return (
-    <>
+    <div className="h-8 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/50 flex items-center justify-between px-4 flex-none">
+      <span className="text-xs text-amber-800 dark:text-amber-400">
+        Demo mode{label ? ` — ${label}` : ''}
+      </span>
       <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white border border-white/25 hover:border-white/50 rounded-md px-2.5 py-1 transition-colors"
+        onClick={onEnd}
+        className="text-xs font-medium text-amber-800 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-200 transition-colors"
       >
-        <ArrowLeftRight className="w-3 h-3" />
-        Switch district
+        End Demo
       </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm gap-0 p-0">
-          <DialogHeader className="px-5 py-4 border-b">
-            <DialogTitle>Switch District</DialogTitle>
-            <DialogDescription>Select which district to work from.</DialogDescription>
-          </DialogHeader>
-          <div className="p-3 space-y-1.5">
-            {options.map(opt => {
-              const isCurrent = opt.key === activeKey
-              return (
-                <button
-                  key={opt.key ?? 'base'}
-                  disabled={isCurrent}
-                  onClick={() => { switchToProfile(opt.account); setOpen(false) }}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-colors',
-                    isCurrent
-                      ? 'bg-primary/5 border-primary/30 cursor-default'
-                      : 'border-border hover:bg-muted'
-                  )}
-                >
-                  <div className={cn(
-                    'w-9 h-9 rounded-md text-xs font-bold flex items-center justify-center flex-none border',
-                    isCurrent
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted text-muted-foreground border-border'
-                  )}>
-                    {schoolAbbr(opt.district) || opt.district.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{opt.district}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {opt.schoolName} · <span className="capitalize">{opt.role.replace(/_/g, ' ')}</span>
-                    </p>
-                  </div>
-                  {isCurrent && (
-                    <span className="text-[10px] font-semibold text-primary flex-none">Current</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
-
-// ── Sport rail ────────────────────────────────────────────────────────────────
-
-function SportRail({ role, collapsed }: { role: string | null; collapsed: boolean }) {
-  const { getSportBranding } = useBranding()
-  const { activeProfile } = useProfile()
-  const isCoach = role === 'head_coach' || role === 'assistant_coach'
-  const primaryDistrict = DEMO_BASE[role ?? '']?.district_name ?? ''
-
-  const { data: sports = [] } = useQuery({
-    queryKey: ['sports'],
-    queryFn: () => fetchSports(),
-    enabled: isCoach && !activeProfile,
-  })
-
-  const { data: linked = [] } = useQuery({
-    queryKey: ['linked-accounts', role],
-    queryFn: () => fetchLinkedAccounts(role ?? ''),
-    enabled: isCoach && !activeProfile,
-  })
-
-  const schoolYears = [...new Set(sports.map(s => s.school_year))].sort().reverse()
-  const currentYear = schoolYears[0] ?? ''
-
-  const sameDistrictSports = linked
-    .filter((a: LinkedAccount) => a.status === 'accepted' && a.district_name === primaryDistrict)
-    .flatMap((a: LinkedAccount) => a.active_sports)
-
-  const myActiveSports = activeProfile
-    ? activeProfile.active_sports
-    : [
-        ...sports.filter(s =>
-          s.school_year === currentYear &&
-          s.status === 'active' &&
-          DEMO_COACH_SPORTS[role ?? '']?.[s.id] !== undefined
-        ),
-        ...sameDistrictSports.filter(s => s.status === 'active' && s.school_year === currentYear),
-      ]
-
-  if (!isCoach || myActiveSports.length === 0) return null
-
-  return (
-    <div className="mt-6 pt-4 border-t border-border/50 space-y-0.5">
-      {!collapsed && (
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1">My Teams</p>
-      )}
-      {myActiveSports.map(sport => {
-        const branding = getSportBranding(sport.id)
-        const coachRole = activeProfile
-          ? activeProfile.active_sports.find(s => s.id === sport.id)?.coach_role
-          : DEMO_COACH_SPORTS[role ?? '']?.[sport.id]
-            ?? sameDistrictSports.find(s => s.id === sport.id)?.coach_role
-        const SportIcon = sportIcon(sport.name)
-        return (
-          <div key={sport.id} className="relative group/sport">
-            <Link
-              to={`/dashboard/team/${sport.id}`}
-              className={cn(
-                'flex items-center rounded-md hover:bg-muted transition-colors group',
-                collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2 py-1.5'
-              )}
-            >
-              <div className="w-7 h-7 rounded-lg overflow-hidden flex-none bg-primary/10 flex items-center justify-center border border-border/50">
-                {branding.icon_url
-                  ? <img src={branding.icon_url} alt="" className="w-full h-full object-cover" />
-                  : <SportIcon className="w-3.5 h-3.5 text-primary" />
-                }
-              </div>
-              {!collapsed && (
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-foreground/80 truncate leading-tight group-hover:text-foreground transition-colors">
-                    {sport.name}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground leading-tight flex items-center gap-1">
-                    {coachRole === 'head_coach' ? 'Head Coach' : 'Asst. Coach'}
-                    <span className="text-muted-foreground/40">·</span>
-                    <span className="font-medium text-muted-foreground/70">{schoolAbbr(sport.school_name)}</span>
-                  </p>
-                </div>
-              )}
-            </Link>
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-md text-xs whitespace-nowrap pointer-events-none opacity-0 group-hover/sport:opacity-100 transition-opacity duration-150">
-              <p className="font-medium text-foreground">{sport.name}</p>
-              <p className="text-[10px] text-muted-foreground">{sport.school_name}</p>
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
 
-// ── Nav config ────────────────────────────────────────────────────────────────
+const COACH_ROLES = ['assistant_coach', 'head_coach', 'athletic_director', 'school_admin', 'district_admin', 'super_admin']
 
-const NAV_CONFIG: { to: string; key: string; icon: React.ElementType; min?: string; roles?: string[] }[] = [
-  { to: '/dashboard/overview',      key: 'nav.overview',      icon: LayoutDashboard, min: 'assistant_coach'   },
-  { to: '/dashboard/reviews',       key: 'nav.reviews',       icon: ShieldAlert,     min: 'assistant_coach'   },
-  { to: '/dashboard/announcements', key: 'nav.announcements', icon: Megaphone,       min: 'assistant_coach'   },
-  { to: '/dashboard/sports',        key: 'nav.sports',        icon: Trophy,          min: 'athletic_director' },
-  { to: '/dashboard/schools',       key: 'nav.schools',       icon: Building2,       min: 'district_admin'    },
-  { to: '/dashboard/staff',         key: 'nav.staff',         icon: UsersRound,      min: 'athletic_director' },
-  { to: '/dashboard/audit-log',     key: 'nav.auditLog',      icon: ClipboardList,   min: 'athletic_director' },
-  { to: '/dashboard/import',        key: 'nav.import',        icon: Upload,          roles: ['head_coach', 'athletic_director'] },
-  { to: '/dashboard/settings',      key: 'nav.settings',      icon: Settings,        min: 'assistant_coach'   },
+type NavChild = { to: string; label: string; icon: React.ElementType; roles?: string[] }
+type NavItem  = { to?: string; key: string; icon: React.ElementType; min?: string; roles?: string[]; children?: NavChild[] }
+
+const AD_ROLES = ['athletic_director', 'school_admin', 'district_admin', 'super_admin']
+
+const SAFETY_SUBNAV: NavChild[] = [
+  { to: '/dashboard/safety/chats', label: 'Chat Viewer', icon: MessageSquare },
+  { to: '/dashboard/audit-log',    label: 'Audit Log',   icon: ClipboardList, roles: AD_ROLES },
 ]
 
-// ── AppShell ──────────────────────────────────────────────────────────────────
+const SCHEDULE_SUBNAV: NavChild[] = [
+  { to: '/dashboard/calendar',          label: 'Calendar',            icon: CalendarDays },
+  { to: '/dashboard/ai-schedule',       label: 'Generate Schedule',   icon: Sparkles     },
+  { to: '/dashboard/major-competitions', label: 'Major Competitions', icon: Trophy       },
+]
+
+const NAV_CONFIG: NavItem[] = [
+  { to: '/dashboard/overview',        key: 'nav.overview',       icon: LayoutDashboard, min: 'assistant_coach'   },
+  { to: '/dashboard/alerts',          key: 'nav.alerts',         icon: ShieldAlert,     roles: ['head_coach', 'athletic_director', 'school_admin', 'district_admin', 'super_admin'] },
+  { to: '/dashboard/reviews',         key: 'nav.reviews',        icon: Flag,            roles: ['assistant_coach', 'head_coach', 'athletic_director', 'school_admin', 'super_admin'] },
+  { key: 'nav.safety',                icon: Shield,              roles: ['head_coach', 'athletic_director', 'school_admin', 'district_admin', 'super_admin'], children: SAFETY_SUBNAV },
+  { to: '/dashboard/announcements',   key: 'nav.announcements',  icon: Megaphone,       roles: COACH_ROLES       },
+  { to: '/dashboard/sports',          key: 'nav.sports',         icon: Trophy,          roles: ['athletic_director', 'school_admin', 'district_admin', 'super_admin'] },
+  { to: '/dashboard/sports',          key: 'nav.teams',          icon: Trophy,          roles: ['sports_commissioner'] },
+  { key: 'nav.schedule',              icon: CalendarDays,        roles: ['sports_commissioner'], children: SCHEDULE_SUBNAV },
+  { to: '/dashboard/events',          key: 'nav.events',         icon: CalendarCheck,   roles: ['sports_commissioner'] },
+  { to: '/dashboard/venues',          key: 'nav.venues',         icon: MapPinned,       roles: ['sports_commissioner'] },
+  { to: '/dashboard/results',         key: 'nav.results',        icon: BarChart2,       roles: ['sports_commissioner', 'athletic_director'] },
+  { to: '/dashboard/calendar',        key: 'nav.calendar',       icon: CalendarDays,    roles: ['athletic_director', 'school_admin', 'district_admin', 'super_admin'] },
+  { to: '/dashboard/schools',         key: 'nav.schools',        icon: Building2,       min: 'district_admin'    },
+  { to: '/dashboard/staff',           key: 'nav.staff',          icon: UsersRound,      min: 'athletic_director' },
+  { to: '/dashboard/import',          key: 'nav.import',         icon: Upload,          roles: ['athletic_director'] },
+  { to: '/dashboard/parent-requests', key: 'nav.parentRequests', icon: InboxIcon,       roles: ['athletic_director', 'school_admin', 'district_admin', 'super_admin'] },
+  { to: '/dashboard/gemma-demo',      key: 'nav.gemmaDemo',      icon: Cpu,             roles: ['head_coach', 'assistant_coach'] },
+  { to: '/dashboard/settings',        key: 'nav.settings',       icon: Settings,        min: 'assistant_coach'   },
+]
 
 export default function AppShell() {
-  const { user, demoRole, logout: clearAuth } = useAuth()
+  const { user, demoRole, effectiveRole, logout: clearAuth } = useAuth()
   const { activeProfile, resetProfile } = useProfile()
   const { resetBranding } = useBranding()
-  const { resetPhoto } = useUserPhoto()
+  const { resetPhoto, photoUrl } = useUserPhoto()
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const { t } = useTranslationHelpers()
+  const navigate    = useNavigate()
+  const { t }       = useTranslationHelpers()
+  const tStr        = t as (key: string) => string
   const { isDark, toggle: toggleTheme } = useTheme()
   const [collapsed, setCollapsed] = useState(false)
-  const { photoUrl } = useUserPhoto()
 
-  const isCoach = demoRole === 'head_coach' || demoRole === 'assistant_coach'
-  const base = DEMO_BASE[demoRole ?? '']
-  const currentDistrict = activeProfile?.district_name ?? base?.district_name
+  const location      = useLocation()
+  const isCoach       = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
+  const base          = DEMO_BASE[demoRole ?? '']
   const isDiffDistrict  = isCoach && !!activeProfile && activeProfile.district_name !== base?.district_name
 
-  const isParent     = demoRole === 'parent'
-  const isMobileOnly = !atLeast(demoRole, 'assistant_coach') && !isParent
+  const headerLabel = (() => {
+    if (effectiveRole === 'sports_commissioner') {
+      const names = base?.managed_sport_names
+      return names?.length ? names.join(', ') : (base?.district_name || null)
+    }
+    return activeProfile?.district_name ?? base?.district_name ?? null
+  })()
+
+  const isParent     = effectiveRole === 'parent'
+  const isMobileOnly = !atLeast(effectiveRole, 'assistant_coach') && !isParent
+  const isAD         = ['athletic_director', 'school_admin', 'district_admin', 'super_admin'].includes(effectiveRole ?? '')
+  const canReview    = ['assistant_coach', 'head_coach', 'athletic_director', 'school_admin', 'super_admin'].includes(effectiveRole ?? '')
+
+  const { data: pendingRequests } = useQuery({
+    queryKey: ['adViewRequests'],
+    queryFn:  fetchAdViewRequests,
+    enabled:  isAD,
+    staleTime: 1000 * 30,
+  })
+  const pendingCount = pendingRequests?.length ?? 0
+
+  const { data: flaggedMessages } = useQuery({
+    queryKey: ['flagged_messages'],
+    queryFn:  fetchFlaggedMessages,
+    enabled:  canReview,
+    staleTime: 1000 * 30,
+  })
+  const reviewCount = flaggedMessages?.length ?? 0
+
+  const scheduleChildPaths = SCHEDULE_SUBNAV.map(c => c.to)
+  const safetyChildPaths   = SAFETY_SUBNAV.map(c => c.to)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    const init = new Set<string>()
+    if (scheduleChildPaths.some(p => location.pathname.startsWith(p))) init.add('nav.schedule')
+    if (safetyChildPaths.some(p => location.pathname.startsWith(p)))   init.add('nav.safety')
+    return init
+  })
+  function toggleGroup(key: string) {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }
 
   async function handleLogout() {
     await logout()
@@ -281,52 +152,127 @@ export default function AppShell() {
     navigate('/login')
   }
 
-  const visibleNav = NAV_CONFIG.filter(item => {
-    if (!item.roles ? !atLeast(demoRole, item.min ?? '') : !item.roles.includes(demoRole ?? '')) return false
+  async function handleEndDemo() {
+    await resetDemo()
+    clearAuth()
+    resetProfile()
+    resetBranding()
+    resetPhoto()
+    queryClient.clear()
+    navigate('/demo', { replace: true })
+  }
+
+  const allVisible = NAV_CONFIG.filter(item => {
+    if (!item.roles ? !atLeast(effectiveRole, item.min ?? '') : !item.roles.includes(effectiveRole ?? '')) return false
     if (item.to === '/dashboard/settings' && isDiffDistrict) return false
     return true
   })
+  const visibleNav   = allVisible.filter(item => item.to !== '/dashboard/settings')
+  const settingsItem = allVisible.find(item => item.to === '/dashboard/settings')
+
+  const demoRoleLabel = DEMO_ROLES.find(r => r.key === demoRole)?.label
+
+  // Redirect parents away from non-parent routes to /dashboard/family
+  useEffect(() => {
+    if (!isParent) return
+    const nonParentPaths = ['/dashboard', '/dashboard/overview']
+    if (nonParentPaths.includes(location.pathname)) {
+      navigate('/dashboard/family', { replace: true })
+    }
+  }, [isParent, location.pathname, navigate])
 
   if (isParent) {
+    const parentNav = [
+      { to: '/dashboard/family',          label: 'Family',   icon: Home          },
+      { to: '/dashboard/family-messages', label: 'Messages', icon: MessageSquare, locked: true },
+      { to: '/dashboard/gemma-demo',      label: 'Gemma 4',  icon: Cpu           },
+    ]
+
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b px-6 py-4 flex items-center justify-between">
-          <div>
-            <span className="font-bold tracking-tight">{t('app.name')}</span>
-            <span className="ml-3 text-xs text-muted-foreground">{user?.first_name} {user?.last_name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {t('nav.signOut')}
-            </button>
-          </div>
+      <div className="min-h-screen flex flex-col bg-background">
+        {demoRole && <DemoBanner label={demoRoleLabel} onEnd={handleEndDemo} />}
+
+        {/* Top bar */}
+        <header className="h-12 bg-primary dark:bg-blue-950 flex items-center gap-3 px-4 flex-none">
+          <span className="font-bold text-base tracking-tight text-white">{t('app.name')}</span>
+          <div className="flex-1" />
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('nav.signOut')}
+          </button>
         </header>
-        <Family />
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Parent sidebar */}
+          <aside className="w-52 border-r flex flex-col shrink-0">
+            <div className="px-4 py-4 border-b">
+              <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Parent</p>
+            </div>
+
+            <nav className="flex-1 p-2 space-y-0.5">
+              {parentNav.map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => cn(
+                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  )}
+                >
+                  <item.icon className="w-4 h-4 flex-none" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.locked && <Lock className="w-3 h-3 opacity-50" />}
+                </NavLink>
+              ))}
+            </nav>
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 overflow-y-auto">
+            <Outlet />
+          </main>
+        </div>
       </div>
     )
   }
 
   if (isMobileOnly) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center space-y-4 max-w-sm">
-          <Smartphone className="w-10 h-10 text-muted-foreground mx-auto" />
-          <div className="space-y-1">
-            <h1 className="text-lg font-semibold">{t('mobileOnly.heading')}</h1>
-            <p className="text-sm text-muted-foreground">{t('mobileOnly.description')}</p>
-          </div>
+      <div className="min-h-screen flex flex-col bg-background">
+        {demoRole && <DemoBanner label={demoRoleLabel} onEnd={handleEndDemo} />}
+        <header className="h-12 bg-primary dark:bg-blue-950 flex items-center gap-3 px-4 flex-none">
+          <span className="font-bold text-base tracking-tight text-white">KeepUp</span>
+          <div className="flex-1" />
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <button
             onClick={handleLogout}
-            className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
           >
+            <LogOut className="w-4 h-4" />
             {t('nav.signOut')}
           </button>
+        </header>
+        <div className="flex-1 overflow-y-auto">
+          <GemmaDemo />
         </div>
       </div>
     )
@@ -337,11 +283,13 @@ export default function AppShell() {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
 
+      {demoRole && <DemoBanner label={demoRoleLabel} onEnd={handleEndDemo} />}
+
       {/* Top bar */}
       <header className="h-12 bg-primary dark:bg-blue-950 flex items-center gap-3 px-4 flex-none">
         <span className="font-bold text-base tracking-tight text-white">KeepUp</span>
 
-        {currentDistrict && (
+        {headerLabel && (
           <>
             <div className="w-px h-4 bg-white/20 flex-none" />
             <div className="flex items-center gap-2 min-w-0">
@@ -349,7 +297,7 @@ export default function AppShell() {
                 'text-sm truncate',
                 isDiffDistrict ? 'text-amber-300 font-medium' : 'text-white/70 dark:text-cyan-400/70'
               )}>
-                {currentDistrict}
+                {headerLabel}
               </span>
               <DistrictSwitcher demoRole={demoRole} />
             </div>
@@ -357,6 +305,8 @@ export default function AppShell() {
         )}
 
         <div className="flex-1" />
+
+        <NotificationBell />
 
         <button
           onClick={toggleTheme}
@@ -375,11 +325,10 @@ export default function AppShell() {
         </button>
       </header>
 
-      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
 
         <aside className={cn(
-          'flex-none border-r flex flex-col transition-[width] duration-200',
+          'flex-none flex flex-col transition-[width] duration-200 relative',
           collapsed ? 'w-14' : 'w-56'
         )}>
 
@@ -387,7 +336,7 @@ export default function AppShell() {
           <Link
             to="/dashboard/profile"
             className={cn(
-              'border-b flex items-center gap-3 min-h-[56px] hover:bg-muted/40 transition-colors',
+              'flex items-center gap-3 min-h-[56px] hover:bg-muted/40 transition-colors',
               collapsed ? 'px-0 py-3 justify-center' : 'px-4 py-3'
             )}
           >
@@ -407,13 +356,114 @@ export default function AppShell() {
             )}
           </Link>
 
-          {/* Nav */}
           <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-            {visibleNav.map(({ to, key, icon: Icon }) => (
+            {visibleNav.map(item => {
+              const { key, icon: Icon } = item
+
+              if (item.children) {
+                const visibleChildren = item.children.filter(c => !c.roles || c.roles.includes(effectiveRole ?? ''))
+                if (!visibleChildren.length) return null
+                const isOpen = expandedGroups.has(key)
+                const anyChildActive = visibleChildren.some(c => location.pathname.startsWith(c.to))
+                return (
+                  <div key={key}>
+                    {collapsed ? (
+                      <NavLink
+                        to={visibleChildren[0]?.to ?? item.children[0].to}
+                        title={tStr(key)}
+                        className={({ isActive }) => cn(
+                          'flex items-center justify-center rounded-md text-sm transition-colors px-0 py-2.5',
+                          isActive || anyChildActive
+                            ? 'bg-primary text-primary-foreground font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                      >
+                        <Icon className="w-4 h-4 flex-none" />
+                      </NavLink>
+                    ) : (
+                      <button
+                        onClick={() => toggleGroup(key)}
+                        className={cn(
+                          'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                          anyChildActive
+                            ? 'text-foreground font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                      >
+                        <Icon className="w-4 h-4 flex-none" />
+                        {tStr(key)}
+                        <ChevronDown className={cn(
+                          'ml-auto w-3.5 h-3.5 flex-none transition-transform duration-150',
+                          isOpen && 'rotate-180'
+                        )} />
+                      </button>
+                    )}
+                    {!collapsed && isOpen && (
+                      <div className="ml-3 pl-3.5 border-l border-border/40 mt-0.5 mb-1 space-y-0.5">
+                        {visibleChildren.map(({ to, label, icon: ChildIcon }) => (
+                          <NavLink
+                            key={to}
+                            to={to}
+                            className={({ isActive }) => cn(
+                              'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
+                              isActive
+                                ? 'bg-primary text-primary-foreground font-medium'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                            )}
+                          >
+                            <ChildIcon className="w-3.5 h-3.5 flex-none" />
+                            {label}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              const badgeCount = item.to === '/dashboard/parent-requests' ? pendingCount
+                               : item.to === '/dashboard/reviews'         ? reviewCount
+                               : 0
+              const hasBadge = badgeCount > 0
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to!}
+                  title={collapsed ? tStr(key) : undefined}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center rounded-md text-sm transition-colors',
+                      collapsed ? 'justify-center px-0 py-2.5' : 'gap-2.5 px-3 py-2',
+                      isActive
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )
+                  }
+                >
+                  <span className="relative flex-none">
+                    <Icon className="w-4 h-4" />
+                    {hasBadge && collapsed && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-destructive" />
+                    )}
+                  </span>
+                  {!collapsed && tStr(key)}
+                  {!collapsed && hasBadge && (
+                    <span className="ml-auto flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground px-1">
+                      {badgeCount}
+                    </span>
+                  )}
+                </NavLink>
+              )
+            })}
+            <SportRail role={effectiveRole} collapsed={collapsed} />
+          </nav>
+
+          {/* Settings pinned at bottom */}
+          {settingsItem && (
+            <div className="px-2 pb-2 pt-2">
               <NavLink
-                key={to}
-                to={to}
-                title={collapsed ? t(key as any) : undefined}
+                to={settingsItem.to!}
+                title={collapsed ? tStr('nav.settings') : undefined}
                 className={({ isActive }) =>
                   cn(
                     'flex items-center rounded-md text-sm transition-colors',
@@ -424,19 +474,18 @@ export default function AppShell() {
                   )
                 }
               >
-                <Icon className="w-4 h-4 flex-none" />
-                {!collapsed && t(key as any)}
+                <Settings className="w-4 h-4 flex-none" />
+                {!collapsed && tStr('nav.settings')}
               </NavLink>
-            ))}
-            <SportRail role={demoRole} collapsed={collapsed} />
-          </nav>
+            </div>
+          )}
 
-          {/* Collapse toggle on the divider line */}
-          <div className="relative border-t">
+          {/* Right border with collapse button centered on it */}
+          <div className="absolute right-0 top-0 bottom-0 w-px bg-border">
             <button
               onClick={() => setCollapsed(v => !v)}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="absolute -top-3 right-2 w-6 h-6 rounded-md bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors z-10"
             >
               {collapsed
                 ? <PanelLeftOpen className="w-3.5 h-3.5" />
@@ -444,7 +493,6 @@ export default function AppShell() {
               }
             </button>
           </div>
-          <div className="h-3" />
 
         </aside>
 

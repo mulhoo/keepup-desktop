@@ -7,11 +7,14 @@
       },
       "nav": {
         "overview": "",
+        "alerts": "警报",
+        "safety": "安全",
         "reviews": "",
         "announcements": "",
         "sports": "",
         "settings": "",
-        "signOut": ""
+        "signOut": "",
+        "calendar": "赛程"
       },
       "roles": {
         "district_admin": "",

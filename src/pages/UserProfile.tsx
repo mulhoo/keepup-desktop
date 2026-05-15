@@ -27,10 +27,11 @@ async function cropImageToDataUrl(imageSrc: string, pixelCrop: Area): Promise<st
 }
 
 export default function UserProfile() {
-  const { user, demoRole } = useAuth()
+  const { user, demoRole, effectiveRole } = useAuth()
   const { photoUrl, setPhoto } = useUserPhoto()
   const { activeProfile } = useProfile()
   const { t } = useTranslationHelpers()
+  const tStr  = t as (key: string) => string
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [cropSrc, setCropSrc] = useState<string | null>(null)
@@ -42,7 +43,7 @@ export default function UserProfile() {
   const currentSchool   = activeProfile?.school_name   ?? base?.school_name   ?? '—'
   const currentDistrict = activeProfile?.district_name ?? base?.district_name ?? '—'
   const currentEmail    = activeProfile?.email         ?? user?.email         ?? '—'
-  const roleLabel       = t(`roles.${demoRole}` as any) || demoRole?.replace(/_/g, ' ') || '—'
+  const roleLabel       = tStr(`roles.${effectiveRole}`) || effectiveRole?.replace(/_/g, ' ') || '—'
   const initials        = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,19 +71,19 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="p-8 max-w-lg mx-auto space-y-8">
+    <div className="px-10 py-8 max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">My Profile</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your account details.</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your account details.</p>
       </div>
 
-      {/* Avatar */}
-      <div className="flex flex-col items-center gap-3">
-        <div className="relative group">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center ring-2 ring-border">
+      {/* Avatar + photo actions */}
+      <div className="flex items-center gap-4">
+        <div className="relative group flex-none">
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center ring-2 ring-border">
             {photoUrl
               ? <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
-              : <span className="text-2xl font-bold text-primary select-none">{initials}</span>
+              : <span className="text-xl font-bold text-primary select-none">{initials}</span>
             }
           </div>
           <label className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
@@ -114,8 +115,8 @@ export default function UserProfile() {
       </div>
 
       {/* Info fields */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">First name</label>
             <div className="px-3 py-2 rounded-md border bg-muted/30 text-sm">{user?.first_name ?? '—'}</div>
@@ -131,7 +132,7 @@ export default function UserProfile() {
           <div className="px-3 py-2 rounded-md border bg-muted/30 text-sm">{currentEmail}</div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Role</label>
             <div className="px-3 py-2 rounded-md border bg-muted/30 text-sm capitalize">{roleLabel}</div>

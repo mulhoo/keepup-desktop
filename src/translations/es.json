@@ -7,11 +7,14 @@
       },
       "nav": {
         "overview": "",
+        "alerts": "Alertas",
+        "safety": "Seguridad",
         "reviews": "",
         "announcements": "",
         "sports": "",
         "settings": "",
-        "signOut": ""
+        "signOut": "",
+        "calendar": "Calendario"
       },
       "roles": {
         "district_admin": "",

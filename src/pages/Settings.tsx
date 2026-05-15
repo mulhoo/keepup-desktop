@@ -4,6 +4,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { atLeast } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
 import { Palette, ImageIcon, Link2, Link2Off, Send, X } from 'lucide-react'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import ThemeEditor from '@/components/theme/ThemeEditor'
 import SchoolBrandingEditor from '@/components/branding/SchoolBrandingEditor'
 import { useBranding } from '@/contexts/BrandingContext'
@@ -19,9 +23,8 @@ function DefaultProfileSection({ demoRole }: { demoRole: string | null }) {
   const { defaultKey, setDefaultKey } = useProfile()
 
   const { data: linked = [] } = useQuery({
-    queryKey: ['linked-accounts', demoRole],
-    queryFn: () => fetchLinkedAccounts(demoRole ?? ''),
-    enabled: !!demoRole,
+    queryKey: ['linked-accounts'],
+    queryFn: fetchLinkedAccounts,
   })
 
   const base = DEMO_BASE[demoRole ?? '']
@@ -90,22 +93,21 @@ function DefaultProfileSection({ demoRole }: { demoRole: string | null }) {
   )
 }
 
-function LinkedAccountsSection({ demoRole }: { demoRole: string | null }) {
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [pendingMock, setPendingMock] = useState<PendingInvitation[]>([])
-  const [removedIds, setRemovedIds] = useState<number[]>([])
+function LinkedAccountsSection() {
+  const [inviteEmail,   setInviteEmail]   = useState('')
+  const [pendingMock,   setPendingMock]   = useState<PendingInvitation[]>([])
+  const [removedIds,    setRemovedIds]    = useState<number[]>([])
+  const [confirmUnlink, setConfirmUnlink] = useState<LinkedAccount | null>(null)
   const queryClient = useQueryClient()
 
   const { data: linked = [] } = useQuery({
-    queryKey: ['linked-accounts', demoRole],
-    queryFn: () => fetchLinkedAccounts(demoRole ?? ''),
-    enabled: !!demoRole,
+    queryKey: ['linked-accounts'],
+    queryFn: fetchLinkedAccounts,
   })
 
   const { data: serverPending = [] } = useQuery({
-    queryKey: ['linked-pending', demoRole],
-    queryFn: () => fetchPendingInvitations(demoRole ?? ''),
-    enabled: !!demoRole,
+    queryKey: ['linked-pending'],
+    queryFn: fetchPendingInvitations,
   })
 
   const allPending = [...serverPending, ...pendingMock]
@@ -160,7 +162,7 @@ function LinkedAccountsSection({ demoRole }: { demoRole: string | null }) {
                 </p>
               </div>
               <button
-                onClick={() => removeLink(account.id)}
+                onClick={() => setConfirmUnlink(account)}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1 rounded-md hover:bg-destructive/10 flex-none"
               >
                 <Link2Off className="w-3.5 h-3.5" />
@@ -210,6 +212,27 @@ function LinkedAccountsSection({ demoRole }: { demoRole: string | null }) {
           Send invite
         </Button>
       </form>
+
+      <AlertDialog open={!!confirmUnlink} onOpenChange={v => { if (!v) setConfirmUnlink(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlink this profile?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your account at {confirmUnlink?.school_name} ({confirmUnlink?.district_name}) will be disconnected.
+              You can always send a new invite to reconnect.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (confirmUnlink) { removeLink(confirmUnlink.id); setConfirmUnlink(null) } }}
+            >
+              Unlink
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }
@@ -260,26 +283,26 @@ function FontSizeCards({ value, onChange }: { value: FontSize; onChange: (v: Fon
 }
 
 export default function Settings() {
-  const { demoRole } = useAuth()
+  const { demoRole, effectiveRole } = useAuth()
   const { schoolBranding } = useBranding()
   const { prefs, setFontSize } = useAccessibility()
-  const isCoach = demoRole === 'head_coach' || demoRole === 'assistant_coach'
+  const isCoach = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
 
-  const canTheme    = atLeast(demoRole, 'athletic_director') && demoRole !== 'district_admin'
-  const canBranding = demoRole === 'athletic_director' || demoRole === 'school_admin'
+  const canTheme    = atLeast(effectiveRole, 'athletic_director') && effectiveRole !== 'district_admin'
+  const canBranding = effectiveRole === 'athletic_director' || effectiveRole === 'school_admin'
 
   const [themeOpen,    setThemeOpen]    = useState(false)
   const [brandingOpen, setBrandingOpen] = useState(false)
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-5">
+    <div className="px-10 py-8 max-w-2xl space-y-5">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your school configuration.</p>
       </div>
 
       {isCoach && <DefaultProfileSection demoRole={demoRole} />}
-      {isCoach && <LinkedAccountsSection demoRole={demoRole} />}
+      {isCoach && <LinkedAccountsSection />}
 
       {canBranding && (
         <section className="space-y-3">

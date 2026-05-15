@@ -1,36 +1,52 @@
-import { useState } from 'react'
+import { useState, useRef, KeyboardEvent } from 'react'
 import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, ChevronDown, Loader2, Mail, Phone } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, ChevronDown, Loader2, Mail, Phone, Trash2, X, Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { fetchSportDetail, DEMO_COACH_SPORTS, type SportMember } from '@/api/sports'
+import { fetchSportDetail, updateMember, updateSportLevels, purgeStudentData, type SportMember, type SportMemberUpdate, type SportCoach } from '@/api/sports'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
 const SEASON_LABEL: Record<string, string> = { fall: 'Fall', winter: 'Winter', spring: 'Spring' }
 const COACH_LABEL: Record<string, string> = { head_coach: 'Head Coach', assistant_coach: 'Asst. Coach' }
 
-// ── Athlete profile dialog ────────────────────────────────────────────────────
+const LEVEL_COLORS = [
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+]
 
-function InfoField({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="space-y-0.5">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="text-sm">{value ?? '—'}</p>
-    </div>
-  )
+function levelColor(level: string, levels: string[]) {
+  const idx = levels.indexOf(level)
+  return LEVEL_COLORS[idx >= 0 ? idx % LEVEL_COLORS.length : 0]
 }
 
-function AthleteDialog({ member, canEdit, onClose, onSave }: {
+
+function AthleteDialog({ member, levels, canEdit, canPurge, onClose, onSave, onPurge }: {
   member: SportMember
+  levels: string[]
   canEdit: boolean
+  canPurge: boolean
   onClose: () => void
-  onSave: (updates: Partial<SportMember>) => void
+  onSave: (updates: SportMemberUpdate) => void
+  onPurge: () => void
 }) {
   const [grade,    setGrade]    = useState(member.grade         ?? '')
   const [jersey,   setJersey]   = useState(member.jersey_number ?? '')
+  const [position, setPosition] = useState(member.position      ?? '')
+  const [dob,      setDob]      = useState(member.dob           ?? '')
+  const [level,    setLevel]    = useState(member.level         ?? '')
   const [expanded, setExpanded] = useState(false)
-  const isDirty = grade !== (member.grade ?? '') || jersey !== (member.jersey_number ?? '')
+  const [confirmPurge, setConfirmPurge] = useState(false)
+  const isDirty = grade     !== (member.grade         ?? '')
+              || jersey    !== (member.jersey_number  ?? '')
+              || position  !== (member.position       ?? '')
+              || dob       !== (member.dob            ?? '')
+              || level     !== (member.level          ?? '')
 
   const initials = `${member.first_name[0]}${member.last_name[0]}`
 
@@ -52,11 +68,10 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
                 {member.role === 'student_captain' && (
                   <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">Captain</span>
                 )}
-                {member.level === 'varsity' && (
-                  <span className="text-[11px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">Varsity</span>
-                )}
-                {member.level === 'jv' && (
-                  <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">JV</span>
+                {member.level && (
+                  <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', levelColor(member.level, levels))}>
+                    {member.level}
+                  </span>
                 )}
                 {member.graduated && (
                   <span className="text-[11px] font-semibold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Graduated</span>
@@ -97,10 +112,50 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
                 <p className="text-sm py-1.5">{member.jersey_number ? `#${member.jersey_number}` : '—'}</p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Position</label>
+              {canEdit ? (
+                <input
+                  value={position}
+                  onChange={e => setPosition(e.target.value)}
+                  placeholder="e.g. Freestyle"
+                  className="w-full border rounded-md px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              ) : (
+                <p className="text-sm py-1.5">{member.position ?? '—'}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Date of Birth</label>
+              {canEdit ? (
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  className="w-full border rounded-md px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              ) : (
+                <p className="text-sm py-1.5">{member.dob ?? '—'}</p>
+              )}
+            </div>
+            {levels.length > 0 && (
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Level</label>
+                {canEdit ? (
+                  <select
+                    value={level}
+                    onChange={e => setLevel(e.target.value)}
+                    className="w-full border rounded-md px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">— Not assigned —</option>
+                    {levels.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                ) : (
+                  <p className="text-sm py-1.5">{member.level ?? '—'}</p>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Read-only: position */}
-          <InfoField label="Position" value={member.position} />
 
           {/* Student contact */}
           <div className="space-y-2">
@@ -179,6 +234,49 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
               </div>
             )}
           </div>
+
+          {/* Purge zone — district/school admin only */}
+          {canPurge && (
+            <div className="border border-destructive/30 rounded-lg p-4 space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-destructive">
+                Permanent data removal
+              </p>
+              {!confirmPurge ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Permanently deletes all records for this student — account, contact info, season history, and parent links. This cannot be undone.
+                  </p>
+                  <button
+                    onClick={() => setConfirmPurge(true)}
+                    className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors font-medium"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Purge all data
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-destructive">
+                    Are you sure? This permanently erases <span className="font-bold">{member.first_name} {member.last_name}</span>'s account and all associated records.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setConfirmPurge(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { setConfirmPurge(false); onPurge() }}
+                      className="text-xs bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors font-medium"
+                    >
+                      Yes, permanently delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {canEdit && (
@@ -190,7 +288,7 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
               Cancel
             </button>
             <button
-              onClick={() => { onSave({ grade, jersey_number: jersey }); onClose() }}
+              onClick={() => { onSave({ grade: grade || undefined, jersey_number: jersey || undefined, position: position || undefined, dob: dob || undefined, level: level || undefined }); onClose() }}
               disabled={!isDirty}
               className="text-sm bg-primary text-primary-foreground px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -203,7 +301,6 @@ function AthleteDialog({ member, canEdit, onClose, onSave }: {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 type SortCol = 'first_name' | 'last_name' | 'grade'
 type SortDir = 'asc' | 'desc'
@@ -216,28 +313,83 @@ function SortIcon({ active, dir }: { col?: string; active: boolean; dir: SortDir
 }
 
 export default function TeamRoster() {
-  const { sportId }  = useParams<{ sportId: string }>()
-  const { demoRole } = useAuth()
-  const canEditRoster = DEMO_COACH_SPORTS[demoRole ?? '']?.[Number(sportId)] === 'head_coach'
+  const { sportId }   = useParams<{ sportId: string }>()
+  const { user }      = useAuth()
+  const queryClient   = useQueryClient()
+  const numericSportId = Number(sportId)
 
   const [selectedMember, setSelectedMember] = useState<SportMember | null>(null)
-  const [overrides, setOverrides] = useState<Record<number, Partial<SportMember>>>({})
   const [filterLevels, setFilterLevels] = useState<Set<string>>(new Set())
   const [filterGrades, setFilterGrades] = useState<Set<string>>(new Set())
   const [sortCol, setSortCol]         = useState<SortCol>('last_name')
   const [sortDir, setSortDir]         = useState<SortDir>('asc')
 
+  const [editingLevels, setEditingLevels] = useState(false)
+  const [draftLevels, setDraftLevels]     = useState<string[]>([])
+  const [newLevelInput, setNewLevelInput] = useState('')
+  const levelInputRef = useRef<HTMLInputElement>(null)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['sport', Number(sportId)],
-    queryFn: () => fetchSportDetail(Number(sportId)),
+    queryKey: ['sport', numericSportId],
+    queryFn: () => fetchSportDetail(numericSportId),
     enabled: !!sportId,
   })
 
-  const resolve = (m: SportMember): SportMember =>
-    overrides[m.user_id] ? { ...m, ...overrides[m.user_id] } : m
+  const sportLevels = data?.levels ?? []
+  const isHeadCoach = data?.coaches?.find((c: SportCoach) => c.id === user?.id)?.role === 'head_coach'
+  const isAdmin = user?.managing_role === 'district_admin' || user?.managing_role === 'school_admin' || user?.managing_role === 'athletic_director'
+  const canEditRoster = isHeadCoach
+  const canManageLevels = isHeadCoach || isAdmin
+  const canPurge = user?.managing_role === 'district_admin' || user?.managing_role === 'school_admin'
 
-  function handleSave(member: SportMember, updates: Partial<SportMember>) {
-    setOverrides(prev => ({ ...prev, [member.user_id]: { ...prev[member.user_id], ...updates } }))
+  const saveMutation = useMutation({
+    mutationFn: ({ userId, updates }: { userId: number; updates: SportMemberUpdate }) =>
+      updateMember(numericSportId, userId, updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sport', numericSportId] }),
+  })
+
+  const purgeMutation = useMutation({
+    mutationFn: (userId: number) => purgeStudentData(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sport', numericSportId] })
+      setSelectedMember(null)
+      toast.success('Student data permanently deleted.')
+    },
+    onError: (e: Error) => toast.error(e.message ?? 'Failed to delete student data.'),
+  })
+
+  const levelsMutation = useMutation({
+    mutationFn: (levels: string[]) => updateSportLevels(numericSportId, levels),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sport', numericSportId] })
+      setEditingLevels(false)
+      toast.success('Levels updated.')
+    },
+    onError: (e: Error) => toast.error(e.message ?? 'Failed to update levels.'),
+  })
+
+  function openLevelsEditor() {
+    setDraftLevels([...(data?.levels ?? [])])
+    setNewLevelInput('')
+    setEditingLevels(true)
+    setTimeout(() => levelInputRef.current?.focus(), 50)
+  }
+
+  function addDraftLevel() {
+    const val = newLevelInput.trim()
+    if (!val || draftLevels.includes(val)) { setNewLevelInput(''); return }
+    setDraftLevels(prev => [...prev, val])
+    setNewLevelInput('')
+    levelInputRef.current?.focus()
+  }
+
+  function handleLevelInputKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { e.preventDefault(); addDraftLevel() }
+    if (e.key === 'Escape') setEditingLevels(false)
+  }
+
+  function handleSave(member: SportMember, updates: SportMemberUpdate) {
+    saveMutation.mutate({ userId: member.user_id, updates })
   }
 
   function handleSort(col: SortCol) {
@@ -248,8 +400,7 @@ export default function TeamRoster() {
   const coaches = data?.members.filter(m => m.role === 'head_coach' || m.role === 'assistant_coach') ?? []
 
   const allAthletes = (data?.members
-    .filter(m => m.role === 'student' || m.role === 'student_captain')
-    .map(resolve) ?? [])
+    .filter(m => m.role === 'student' || m.role === 'student_captain') ?? [])
 
   const grades = [...new Set(allAthletes.map(m => m.grade).filter(Boolean) as string[])]
     .sort((a, b) => Number(a) - Number(b))
@@ -268,8 +419,7 @@ export default function TeamRoster() {
   const thClass = 'px-4 py-2 select-none cursor-pointer hover:text-foreground transition-colors whitespace-nowrap'
 
   return (
-    <div className="px-6 py-8 max-w-7xl space-y-6">
-      {/* Header */}
+    <div className="px-10 py-8 max-w-7xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{data?.name ?? 'Roster'}</h1>
         {data && (
@@ -305,26 +455,105 @@ export default function TeamRoster() {
             </div>
           )}
 
+          {/* Levels manager */}
+          {canManageLevels && (
+            <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Team Levels</p>
+                {!editingLevels && (
+                  <button
+                    onClick={openLevelsEditor}
+                    className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {sportLevels.length === 0 ? 'Add levels' : 'Edit'}
+                  </button>
+                )}
+              </div>
+
+              {!editingLevels ? (
+                sportLevels.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No levels defined. Add levels like "Varsity", "JV", or "C-Team" to organize your roster.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {sportLevels.map((l, i) => (
+                      <span key={l} className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', LEVEL_COLORS[i % LEVEL_COLORS.length])}>
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {draftLevels.map((l, i) => (
+                      <span key={l} className={cn('flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full', LEVEL_COLORS[i % LEVEL_COLORS.length])}>
+                        {l}
+                        <button
+                          onClick={() => setDraftLevels(prev => prev.filter(x => x !== l))}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={levelInputRef}
+                      value={newLevelInput}
+                      onChange={e => setNewLevelInput(e.target.value)}
+                      onKeyDown={handleLevelInputKey}
+                      placeholder="New level (press Enter to add)"
+                      className="flex-1 border rounded-md px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={addDraftLevel}
+                      className="text-xs px-3 py-1.5 border rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => setEditingLevels(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => levelsMutation.mutate(draftLevels)}
+                      disabled={levelsMutation.isPending}
+                      className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {levelsMutation.isPending ? 'Saving…' : 'Save levels'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Filters */}
           <div className="flex items-center gap-2 flex-wrap">
-            {(['varsity', 'jv'] as const).map(level => (
+            {sportLevels.map((level, i) => (
               <button
                 key={level}
                 onClick={() => setFilterLevels(prev => {
                   const next = new Set(prev)
-                  next.has(level) ? next.delete(level) : next.add(level)
+                  if (next.has(level)) next.delete(level); else next.add(level)
                   return next
                 })}
                 className={cn(
                   'text-xs px-3 py-1.5 rounded-full border transition-colors',
                   filterLevels.has(level)
-                    ? level === 'varsity'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-transparent'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-transparent'
+                    ? cn(LEVEL_COLORS[i % LEVEL_COLORS.length], 'border-transparent')
                     : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted'
                 )}
               >
-                {level === 'jv' ? 'JV' : 'Varsity'}
+                {level}
               </button>
             ))}
 
@@ -335,7 +564,7 @@ export default function TeamRoster() {
                 key={g}
                 onClick={() => setFilterGrades(prev => {
                   const next = new Set(prev)
-                  next.has(g) ? next.delete(g) : next.add(g)
+                  if (next.has(g)) next.delete(g); else next.add(g)
                   return next
                 })}
                 className={cn(
@@ -407,11 +636,10 @@ export default function TeamRoster() {
                         {m.role === 'student_captain' && (
                           <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">Captain</span>
                         )}
-                        {m.level === 'varsity' && (
-                          <span className="text-[11px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-full">Varsity</span>
-                        )}
-                        {m.level === 'jv' && (
-                          <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">JV</span>
+                        {m.level && (
+                          <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', levelColor(m.level, sportLevels))}>
+                            {m.level}
+                          </span>
                         )}
                         {m.graduated && (
                           <span className="text-[11px] font-semibold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Graduated</span>
@@ -434,9 +662,12 @@ export default function TeamRoster() {
       {selectedMember && (
         <AthleteDialog
           member={selectedMember}
+          levels={sportLevels}
           canEdit={canEditRoster}
+          canPurge={canPurge}
           onClose={() => setSelectedMember(null)}
           onSave={updates => handleSave(selectedMember, updates)}
+          onPurge={() => purgeMutation.mutate(selectedMember.user_id)}
         />
       )}
     </div>

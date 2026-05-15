@@ -1,5 +1,31 @@
 import { api } from './client'
 
+export interface DemoChannel {
+  id:           number
+  name:         string
+  channel_type: string
+  sport:        string
+  season:       string
+}
+
+export interface DemoMessageResult {
+  message: { id: number; content: string; flag_action: string | null; flagged: boolean }
+  moderation: {
+    score:                 number
+    tier:                  string
+    flag_action:           string | null
+    reason:                string | null
+    visible_to_others:     boolean
+    notifications_sent_to: Array<{ role: string; name: string }>
+  }
+}
+
+export const fetchDemoChannels = () =>
+  api.get<DemoChannel[]>('/demo/channels')
+
+export const sendDemoMessage = (channelId: number, content: string) =>
+  api.post<DemoMessageResult>(`/demo/channels/${channelId}/messages`, { content })
+
 export interface Activity {
   id: number
   event_type: 'message_flagged' | 'data_accessed'
@@ -8,6 +34,7 @@ export interface Activity {
   actor: { name: string } | null
   tier: string | null
   sport: string | null
+  school_name: string | null
   season: string | null
   channel: string | null
   flag_action: string | null
@@ -27,8 +54,8 @@ export interface NotifyResponse {
   notified_at: string
 }
 
-export const fetchActivities = () =>
-  api.get<Activity[]>('/demo/activities')
+export const fetchActivities = (schoolId?: number) =>
+  api.get<Activity[]>(schoolId ? `/demo/activities?school_id=${schoolId}` : '/demo/activities')
 
 export const notifyParents = (id: number) =>
   api.post<NotifyResponse>(`/demo/activities/${id}/notify_parents`, {})

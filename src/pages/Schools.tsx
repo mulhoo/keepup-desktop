@@ -15,7 +15,6 @@ const ROLE_LABEL_PLURAL: Record<MemberRole, string> = {
 }
 const ROLE_ORDER: MemberRole[] = ['head_coach', 'assistant_coach', 'student_captain', 'student']
 
-// ── Past season dialog ────────────────────────────────────────────────────────
 
 function PastSeasonDialog({ sport, onClose }: { sport: Sport; onClose: () => void }) {
   const { data, isLoading } = useQuery({
@@ -78,7 +77,6 @@ function PastSeasonDialog({ sport, onClose }: { sport: Sport; onClose: () => voi
   )
 }
 
-// ── Sport blurb (inline expansion) ───────────────────────────────────────────
 
 function SportBlurb({ current, past }: { current: Sport; past: Sport[] }) {
   const [pastDialog, setPastDialog] = useState<Sport | null>(null)
@@ -268,7 +266,7 @@ export default function Schools() {
   })
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6">
+    <div className="px-10 py-8 max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Schools</h1>
         <p className="text-sm text-muted-foreground mt-1">All schools in your district.</p>

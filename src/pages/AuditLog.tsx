@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Info, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { AlertTriangle, Info, Loader2, ChevronDown, ChevronRight, Shield } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchAuditLog, type AuditEntry } from '@/api/auditLog'
+import { fetchSafetyAuditEvents, type SafetyAuditDbEvent } from '@/api/safety'
+import { useSafety } from '@/contexts/SafetyContext'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABEL: Record<string, string> = {
@@ -86,16 +88,48 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
   )
 }
 
+function SafetyEventRow({ event }: { event: SafetyAuditDbEvent }) {
+  const label = event.event_type === 'safety_accessed' ? 'Safety Access Started'
+    : event.event_type === 'safety_exited'
+      ? `Safety Access Ended${event.reason === 'inactivity' ? ' (inactivity)' : ''}${event.duration_seconds != null ? ` · ${event.duration_seconds}s` : ''}`
+    : 'Chat Search'
+
+  return (
+    <div className="rounded-lg border bg-card overflow-hidden border-amber-200 dark:border-amber-800/40">
+      <div className="px-4 py-3 flex items-start gap-3 bg-amber-50/50 dark:bg-amber-950/10">
+        <Shield className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-none" />
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <p className="text-sm font-medium">{label}</p>
+          {event.notes && (
+            <p className="text-xs text-muted-foreground">{event.notes}</p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {formatTime(event.occurred_at)}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AuditLog() {
-  const { demoRole } = useAuth()
-  const isDistrictAdmin = demoRole === 'district_admin'
+  const { effectiveRole } = useAuth()
+  const { isSafetyAuthenticated } = useSafety()
+  const isDistrictAdmin = effectiveRole === 'district_admin'
 
   const accessedAt = useMemo(() => new Date(), [])
   const [schoolFilter, setSchoolFilter] = useState<string>('')
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['audit-log', demoRole],
-    queryFn: () => fetchAuditLog(demoRole ?? ''),
+    queryKey: ['audit-log'],
+    queryFn: fetchAuditLog,
+  })
+
+  const { data: safetyDbEvents = [] } = useQuery({
+    queryKey: ['safety-audit-events'],
+    queryFn: fetchSafetyAuditEvents,
+    enabled: isSafetyAuthenticated,
+    refetchInterval: 30_000,
   })
 
   const schools = useMemo(
@@ -110,7 +144,7 @@ export default function AuditLog() {
   const anomalyCount = filtered.filter(e => e.anomaly_flagged).length
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6">
+    <div className="px-10 py-8 max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Audit Log</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -172,6 +206,18 @@ export default function AuditLog() {
           {filtered.map(entry => (
             <AuditRow key={entry.id} entry={entry} />
           ))}
+        </div>
+      )}
+
+      {/* Safety access history (persisted) */}
+      {safetyDbEvents.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Safety Access History</h2>
+          <div className="space-y-2">
+            {safetyDbEvents.map(event => (
+              <SafetyEventRow key={event.id} event={event} />
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -7,6 +7,8 @@
       },
       "nav": {
         "overview": "Overview",
+        "alerts": "Alerts",
+        "safety": "Safety",
         "reviews": "Reviews",
         "announcements": "Announcements",
         "sports": "Sports",
@@ -15,6 +17,15 @@
         "staff": "Staff",
         "auditLog": "Audit Log",
         "import": "Import",
+        "teams": "Teams",
+        "schedule": "Schedule",
+        "calendar": "Schedule",
+        "events": "Events",
+        "venues": "Venues",
+        "results": "Results",
+        "aiSchedule": "AI Schedule",
+        "gemmaDemo": "Gemma 4 Demo",
+        "parentRequests": "Parent Requests",
         "signOut": "Sign out"
       },
       "roles": {

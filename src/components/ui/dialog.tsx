@@ -21,6 +21,7 @@ function DialogContent({ className, children, ...props }: React.ComponentPropsWi
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
+        aria-describedby={undefined}
         className={cn(
           'fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] bg-background border rounded-lg shadow-lg',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',

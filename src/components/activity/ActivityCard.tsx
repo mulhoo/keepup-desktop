@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { notifyParents, notifyAD, notifyDistrictAdmin, type Activity } from '@/api/activities'
+import { toast } from '@/lib/toast'
 
 interface Props {
   activity: Activity
@@ -35,25 +36,26 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
 export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, canNotifyDistrictAdmin }: Props) {
   const qc = useQueryClient()
 
-  function patchCache(patch: Partial<Activity>) {
-    qc.setQueryData<Activity[]>(['activities'], old =>
-      old?.map(a => a.id === activity.id ? { ...a, ...patch } : a)
-    )
+  function invalidate() {
+    qc.invalidateQueries({ queryKey: ['activities'] })
   }
 
   const parentsMutation = useMutation({
     mutationFn: () => notifyParents(activity.id),
-    onSuccess: (data) => patchCache({ parents_notified_at: data.notified_at }),
+    onSuccess: () => { invalidate(); toast.success('Parents notified.') },
+    onError:   (e: Error) => toast.error(e.message ?? 'Failed to notify parents.'),
   })
 
   const adMutation = useMutation({
     mutationFn: () => notifyAD(activity.id),
-    onSuccess: (data) => patchCache({ ad_notified_at: data.notified_at }),
+    onSuccess: () => { invalidate(); toast.success('Athletic director notified.') },
+    onError:   (e: Error) => toast.error(e.message ?? 'Failed to notify athletic director.'),
   })
 
   const districtMutation = useMutation({
     mutationFn: () => notifyDistrictAdmin(activity.id),
-    onSuccess: (data) => patchCache({ district_notified_at: data.notified_at }),
+    onSuccess: () => { invalidate(); toast.success('District admin notified.') },
+    onError:   (e: Error) => toast.error(e.message ?? 'Failed to notify district admin.'),
   })
 
   const isSevere   = activity.tier === 'severe'
@@ -64,18 +66,28 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
 
   return (
     <Dialog>
-      {/* ── Compact preview bar ── */}
       <DialogTrigger asChild>
         <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border bg-card text-left hover:bg-muted/50 transition-colors group">
           <span className={cn('w-2 h-2 rounded-full flex-none', dotColor)} />
           <span className="text-xs font-medium text-muted-foreground w-16 flex-none">{label}</span>
           <span className="text-sm flex-1 truncate">{activity.summary}</span>
+          <div className="flex items-center gap-1.5 flex-none">
+            {activity.sport && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded border bg-muted/50 text-muted-foreground font-medium">
+                {activity.sport}
+              </span>
+            )}
+            {activity.school_name && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded border bg-muted/50 text-muted-foreground font-medium">
+                {activity.school_name}
+              </span>
+            )}
+          </div>
           <span className="text-xs text-muted-foreground flex-none">{formatTime(activity.occurred_at)}</span>
           <ChevronRight className="w-4 h-4 text-muted-foreground flex-none opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </DialogTrigger>
 
-      {/* ── Detail dialog ── */}
       <DialogContent className="w-full max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
@@ -88,6 +100,7 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
 
         <div className="px-6 py-3 space-y-2 border-y">
           <DetailRow label="Sport"    value={activity.sport} />
+          <DetailRow label="School"   value={activity.school_name} />
           <DetailRow label="Season"   value={activity.season} />
           <DetailRow label="Channel"  value={activity.channel ? `#${activity.channel}` : null} />
           <DetailRow label="Sent by"  value={activity.actor?.name} />
