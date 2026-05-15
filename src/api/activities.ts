@@ -20,11 +20,21 @@ export interface DemoMessageResult {
   }
 }
 
+export interface OnDeviceResult {
+  score:   number
+  tier:    'clear' | 'questionable' | 'severe'
+  flagged: boolean
+  source:  'gemma4' | 'keyword_fallback'
+}
+
 export const fetchDemoChannels = () =>
   api.get<DemoChannel[]>('/demo/channels')
 
 export const sendDemoMessage = (channelId: number, content: string) =>
   api.post<DemoMessageResult>(`/demo/channels/${channelId}/messages`, { content })
+
+export const moderateOnDevice = (content: string) =>
+  api.post<OnDeviceResult>('/demo/moderate', { content })
 
 export interface Activity {
   id: number

@@ -3,16 +3,31 @@ import { parseDistrictSubdomain } from '@/lib/subdomain'
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 const DISTRICT_SUBDOMAIN = parseDistrictSubdomain()
+const DEMO_TOKEN_KEY = 'keepup_demo_token'
 
 export { DEMO_MODE }
 
+export function getDemoToken(): string | null {
+  return localStorage.getItem(DEMO_TOKEN_KEY)
+}
+
+export function setDemoToken(token: string): void {
+  localStorage.setItem(DEMO_TOKEN_KEY, token)
+}
+
+export function clearDemoToken(): void {
+  localStorage.removeItem(DEMO_TOKEN_KEY)
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const demoToken = DEMO_MODE ? getDemoToken() : null
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    credentials: 'include',
+    credentials: DEMO_MODE ? 'omit' : 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(DISTRICT_SUBDOMAIN ? { 'X-District-Subdomain': DISTRICT_SUBDOMAIN } : {}),
+      ...(demoToken ? { Authorization: `Bearer ${demoToken}` } : {}),
       ...options.headers,
     },
   })

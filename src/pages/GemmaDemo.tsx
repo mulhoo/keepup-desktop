@@ -6,15 +6,16 @@ import {
   X, CheckCircle, Clock, Archive, Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { fetchDemoChannels, sendDemoMessage, type DemoChannel, type DemoMessageResult } from '@/api/activities'
+import { fetchDemoChannels, sendDemoMessage, moderateOnDevice, type DemoChannel, type DemoMessageResult } from '@/api/activities'
 
 
 type Tier  = 'clear' | 'questionable' | 'severe'
 type Phase = 'idle' | 'analyzing' | 'transmitting' | 'done' | 'error'
 
 interface LocalResult {
-  score: number
-  tier:  Tier
+  score:  number
+  tier:   Tier
+  source: 'gemma4' | 'keyword_fallback'
 }
 
 interface ServerEvent {
@@ -30,23 +31,21 @@ interface ServerEvent {
 }
 
 
-const SEVERE_PATTERNS = [
+const FALLBACK_SEVERE = [
   /\b(kill|hurt|attack|threaten|violence|weapon|gun|knife|destroy|harm)\b/i,
   /\b(hate you|i hate|you suck|go die|drop dead)\b/i,
 ]
-const QUESTIONABLE_PATTERNS = [
+const FALLBACK_QUESTIONABLE = [
   /\b(stupid|dumb|idiot|loser|ugly|pathetic|worthless|shut up)\b/i,
   /\b(whatever|don.t care|who cares|boring|lame)\b/i,
 ]
 
-function localScore(text: string): LocalResult {
-  for (const p of SEVERE_PATTERNS) {
-    if (p.test(text)) return { score: 0.75 + Math.random() * 0.20, tier: 'severe' }
-  }
-  for (const p of QUESTIONABLE_PATTERNS) {
-    if (p.test(text)) return { score: 0.40 + Math.random() * 0.30, tier: 'questionable' }
-  }
-  return { score: 0.05 + Math.random() * 0.28, tier: 'clear' }
+function fallbackScore(text: string): LocalResult {
+  if (FALLBACK_SEVERE.some(p => p.test(text)))
+    return { score: 0.75 + Math.random() * 0.20, tier: 'severe',       source: 'keyword_fallback' }
+  if (FALLBACK_QUESTIONABLE.some(p => p.test(text)))
+    return { score: 0.40 + Math.random() * 0.30, tier: 'questionable', source: 'keyword_fallback' }
+  return { score: 0.05 + Math.random() * 0.28,   tier: 'clear',        source: 'keyword_fallback' }
 }
 
 function tierFromResult(result: DemoMessageResult): Tier {
@@ -228,8 +227,11 @@ export default function GemmaDemo() {
 
     setPhase('analyzing')
     setLocalResult(null)
-    await new Promise(r => setTimeout(r, 1600))
-    const onDevice = localScore(text)
+    const [, onDevice] = await Promise.all([
+      new Promise(r => setTimeout(r, 1600)),
+      moderateOnDevice(text).then(r => ({ score: r.score, tier: r.tier, source: r.source } as LocalResult))
+                            .catch(() => fallbackScore(text)),
+    ])
     setLocalResult(onDevice)
 
     setPhase('transmitting')
@@ -382,6 +384,14 @@ export default function GemmaDemo() {
                         <div className="flex items-center gap-2">
                           <Icon className={cn('w-4 h-4', color)} />
                           <span className={cn('text-sm font-semibold', color)}>{label}</span>
+                          <span className={cn(
+                            'ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded',
+                            localResult.source === 'gemma4'
+                              ? 'bg-primary/10 text-primary border border-primary/20'
+                              : 'bg-muted text-muted-foreground border border-border'
+                          )}>
+                            {localResult.source === 'gemma4' ? 'Gemma 4' : 'keyword fallback'}
+                          </span>
                         </div>
                         <p className={cn('text-xs font-medium', color)}>→ {serverLabel}</p>
                         <p className="text-xs text-muted-foreground">{serverDesc}</p>

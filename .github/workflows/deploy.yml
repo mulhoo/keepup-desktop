@@ -36,7 +36,7 @@ jobs:
       - name: Build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_DEMO_MODE: ${{ secrets.VITE_DEMO_MODE }}
+          VITE_DEMO_MODE: ${{ steps.env.outputs.name != 'prod' && 'true' || 'false' }}
         run: npm run build -- --mode ${{ steps.env.outputs.vite_mode }}
 
       - name: Configure AWS credentials

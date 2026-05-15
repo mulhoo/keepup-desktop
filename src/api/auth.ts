@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, setDemoToken, clearDemoToken } from './client'
 
 export interface SessionUser {
   id: number
@@ -36,7 +36,9 @@ export async function loginWithPassword(email: string, password: string): Promis
 }
 
 export async function loginAsDemo(role: DemoRole): Promise<LoginResponse> {
-  return api.post<LoginResponse>('/demo/session', { role })
+  const res = await api.post<LoginResponse>('/demo/session', { role })
+  if (res.token) setDemoToken(res.token)
+  return res
 }
 
 export async function logout(): Promise<void> {
@@ -44,6 +46,7 @@ export async function logout(): Promise<void> {
 }
 
 export async function resetDemo(): Promise<void> {
+  clearDemoToken()
   await api.delete('/demo/session').catch(() => {})
 }
 
