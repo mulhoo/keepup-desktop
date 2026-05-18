@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Cpu, Server, ArrowRight, Send, RotateCcw,
   ShieldCheck, ShieldAlert, ShieldX, Smartphone, Sparkles,
-  X, CheckCircle, Clock, Archive, Bell, Flag, ThumbsUp, Zap, AlertTriangle,
+  X, CheckCircle, Clock, Archive, Bell, Flag, ThumbsUp, Zap, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchDemoChannels, sendDemoMessage, moderateOnDevice, type DemoChannel, type DemoMessageResult } from '@/api/activities'
@@ -544,8 +544,8 @@ export default function GemmaDemo() {
                     : 'bg-muted text-muted-foreground cursor-not-allowed'
                 )}
               >
-                {isAnalyzing    && <><Cpu  className="w-4 h-4 animate-pulse" />Gemma 4 analyzing on device…</>}
-                {isTransmitting && <><Send className="w-4 h-4 animate-pulse" />Sending to KeepUp server…</>}
+                {isAnalyzing    && <><Loader2 className="w-4 h-4 animate-spin" />Gemma 4 analyzing on device…</>}
+                {isTransmitting && <><Loader2 className="w-4 h-4 animate-spin" />Sending to KeepUp server…</>}
                 {!isAnalyzing && !isTransmitting && <><Send className="w-4 h-4" />Send</>}
               </button>
             </div>
