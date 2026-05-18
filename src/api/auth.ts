@@ -41,6 +41,7 @@ export async function loginAsDemo(role: DemoRole): Promise<LoginResponse> {
 }
 
 export async function logout(): Promise<void> {
+  if (DEMO_MODE) { clearDemoToken(); clearDemoRole(); return }
   await api.delete('/auth/session').catch(() => {})
 }
 
