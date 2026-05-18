@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, ChevronRight, ChevronDown, Loader2, Mail, Phone, ShieldOff, X } from 'lucide-react'
+import { ArrowUp, ArrowDown, ArrowUpDown, ArrowLeft, ChevronRight, ChevronDown, Loader2, Mail, Phone, ShieldOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchSportDetail, updateMember, type SportMember, type SportMemberUpdate, type SportCoach } from '@/api/sports'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -295,7 +295,6 @@ export default function TeamRoster() {
   })
 
   const isHeadCoach = data?.coaches?.find((c: SportCoach) => c.id === user?.id)?.role === 'head_coach'
-  const isAdmin = effectiveRole === 'district_admin' || effectiveRole === 'school_admin' || effectiveRole === 'athletic_director'
   const canEditRoster = isHeadCoach || effectiveRole === 'school_admin' || effectiveRole === 'athletic_director'
   const canPurge = effectiveRole === 'district_admin' || effectiveRole === 'school_admin'
 

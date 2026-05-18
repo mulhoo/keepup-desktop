@@ -44,7 +44,7 @@ export async function logout(): Promise<void> {
 }
 
 export async function resetDemoData(): Promise<void> {
-  await api.post('/demo/reset').catch(() => {})
+  await api.post('/demo/reset', {}).catch(() => {})
 }
 
 export async function resetDemo(): Promise<void> {

@@ -33,14 +33,14 @@ export default function ThemeEditor({ open, onClose }: Props) {
     onSuccess: (result) => {
       setGenerated(result)
       // Apply the current variant's palette immediately
-      setColors(variant === 'dark' ? result.dark as Record<string,string> : result.light as Record<string,string>)
+      setColors(variant === 'dark' ? result.dark as unknown as Record<string,string> : result.light as unknown as Record<string,string>)
     },
   })
 
   function handleVariantChange(v: Variant) {
     setVariant(v)
     if (generated) {
-      setColors(v === 'dark' ? generated.dark as Record<string,string> : generated.light as Record<string,string>)
+      setColors(v === 'dark' ? generated.dark as unknown as Record<string,string> : generated.light as unknown as Record<string,string>)
     } else {
       setColors(v === 'dark' ? DARK_DEFAULTS : LIGHT_DEFAULTS)
     }

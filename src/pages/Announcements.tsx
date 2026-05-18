@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Megaphone, Send, CheckCircle2, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'
+import { Send, CheckCircle2, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchSports, sportDisplayName } from '@/api/sports'
 import {
@@ -74,49 +74,11 @@ function SportPill({ sport }: { sport: AnnouncementSport }) {
   )
 }
 
-const MAX_PILLS = 5
-
 function seasonLabel(sports: Announcement['sports']): string | null {
   if (sports.length < 2) return null
   const seasons = [...new Set(sports.map(s => s.athletic_season))]
   if (seasons.length !== 1 || !seasons[0]) return null
   return `${seasons[0].charAt(0).toUpperCase() + seasons[0].slice(1)} Sports`
-}
-
-function AnnouncementRow({ item, showSchool }: { item: Announcement; showSchool: boolean }) {
-  const grouped = seasonLabel(item.sports)
-  const visible  = item.sports.slice(0, MAX_PILLS)
-  const overflow = item.sports.length - MAX_PILLS
-  return (
-    <div className="px-5 py-4 flex gap-4">
-      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-none mt-0.5">
-        <Megaphone className="w-4 h-4 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {grouped ? (
-            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-              {grouped}
-            </span>
-          ) : (
-            <>
-              {visible.map(s => <SportPill key={s.id} sport={s} />)}
-              {overflow > 0 && (
-                <span className="text-xs text-muted-foreground">+{overflow} more</span>
-              )}
-            </>
-          )}
-          {showSchool && item.school_name && (
-            <span className="text-xs text-muted-foreground">· {item.school_name}</span>
-          )}
-        </div>
-        <p className="text-sm leading-snug">{item.content}</p>
-        <p className="text-xs text-muted-foreground">
-          {item.sender.name} · {timeAgo(item.created_at)}
-        </p>
-      </div>
-    </div>
-  )
 }
 
 export default function Announcements() {
@@ -227,8 +189,6 @@ export default function Announcements() {
 
     doSend(params)
   }
-
-  const showSchool = isDistrictLevel || schools.length > 1
 
   const sendLabel = allMode
     ? athleticSeasonFilter

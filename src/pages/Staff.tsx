@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Archive, ArchiveRestore, Check, Mail, Phone, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Pencil, Archive, ArchiveRestore, Check, Mail, Phone, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

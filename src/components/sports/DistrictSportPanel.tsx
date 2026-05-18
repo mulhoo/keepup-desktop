@@ -118,7 +118,6 @@ export function DistrictSportPanel({ sportName, season, instances, schools, show
   const [rosterSport, setRosterSport] = useState<Sport | null>(null)
   const schoolMap      = Object.fromEntries(schools.map(s => [s.id, s]))
   const totalAthletes  = instances.reduce((sum, s) => sum + s.athlete_count, 0)
-  const representative = instances[0]
 
   return (
     <>

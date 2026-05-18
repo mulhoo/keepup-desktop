@@ -77,8 +77,6 @@ export default function TeamAnnouncements() {
 
   const teamSent      = allSent.filter(a => a.sports.some(s => s.id === numericSportId))
   const teamScheduled = allScheduled.filter(a => a.sports.some(s => s.id === numericSportId))
-  const sidebarItems = [...teamScheduled, ...teamSent].slice(0, 15)
-
   const { mutate: doSend, isPending: sending } = useMutation({
     mutationFn: sendAnnouncement,
     onSuccess: (result) => {
