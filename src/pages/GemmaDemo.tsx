@@ -352,7 +352,9 @@ export default function GemmaDemo() {
   const [serverEvents, setServerEvents] = useState<ServerEvent[]>([])
   const [gemmaStatus,  setGemmaStatus]  = useState<'unknown' | 'gemma4' | 'fallback'>('unknown')
   const [channel,      setChannel]      = useState<DemoChannel | null>(null)
+  const [lastResult,   setLastResult]   = useState<{tier: Tier; score: number; flagAction: string | null} | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const resetTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Fetch the general channel on mount so we have somewhere to post
   useEffect(() => {
@@ -399,9 +401,17 @@ export default function GemmaDemo() {
         receivedAt: new Date().toLocaleTimeString(),
       }
       setServerEvents(prev => [event, ...prev])
+      setLastResult({ tier, score: result.moderation.score, flagAction: result.moderation.flag_action })
 
       // Invalidate activities so coach/AD overview picks up the new record
       queryClient.invalidateQueries({ queryKey: ['activities'] })
+
+      if (tier === 'clear') {
+        if (resetTimer.current) clearTimeout(resetTimer.current)
+        resetTimer.current = setTimeout(() => {
+          setMessage(''); setLocalResult(null); setLastResult(null); setPhase('idle')
+        }, 3500)
+      }
 
     } catch {
       // Backend unavailable — fall back to local result for visual
@@ -417,15 +427,25 @@ export default function GemmaDemo() {
         receivedAt: new Date().toLocaleTimeString(),
       }
       setServerEvents(prev => [event, ...prev])
+      setLastResult({ tier: onDevice.tier, score: onDevice.score, flagAction: onDevice.tier === 'severe' ? 'blocked' : onDevice.tier === 'questionable' ? 'held' : null })
+
+      if (onDevice.tier === 'clear') {
+        if (resetTimer.current) clearTimeout(resetTimer.current)
+        resetTimer.current = setTimeout(() => {
+          setMessage(''); setLocalResult(null); setLastResult(null); setPhase('idle')
+        }, 3500)
+      }
     }
 
     setPhase('done')
   }
 
   function handleReset() {
+    if (resetTimer.current) { clearTimeout(resetTimer.current); resetTimer.current = null }
     setMessage('')
     setPhase('idle')
     setLocalResult(null)
+    setLastResult(null)
     setGemmaStatus('unknown')
   }
 
