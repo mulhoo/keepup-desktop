@@ -59,3 +59,52 @@ export const COLOR_SLOT_LABELS: Record<string, string> = {
 }
 
 export const COLOR_SLOT_KEYS = Object.keys(COLOR_SLOT_LABELS)
+
+export function hexToHsl(hex: string): string {
+  const { r, g, b } = hexToRgb(hex)
+  const rn = r / 255, gn = g / 255, bn = b / 255
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn)
+  const l = (max + min) / 2
+  let h = 0, s = 0
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case rn: h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6; break
+      case gn: h = ((bn - rn) / d + 2) / 6; break
+      case bn: h = ((rn - gn) / d + 4) / 6; break
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`
+}
+
+// Maps each color slot to the CSS vars it should drive
+const SLOT_TO_VARS: Record<string, string[]> = {
+  color_background:      ['--background'],
+  color_surface:         ['--card', '--popover'],
+  color_surface_variant: ['--muted', '--secondary'],
+  color_border:          ['--border', '--input'],
+  color_primary:         ['--primary'],
+  color_accent:          ['--accent', '--ring'],
+  color_text_primary:    ['--foreground', '--card-foreground', '--popover-foreground'],
+  color_text_secondary:  ['--muted-foreground', '--secondary-foreground'],
+  color_text_on_primary: ['--primary-foreground'],
+  color_text_on_accent:  ['--accent-foreground'],
+}
+
+export const ALL_SCHOOL_VARS = Object.values(SLOT_TO_VARS).flat()
+
+export function applySchoolTheme(colors: Record<string, string>) {
+  const root = document.documentElement
+  for (const [slot, vars] of Object.entries(SLOT_TO_VARS)) {
+    const hex = colors[slot]
+    if (!hex) continue
+    const hsl = hexToHsl(hex)
+    for (const v of vars) root.style.setProperty(v, hsl)
+  }
+}
+
+export function clearSchoolTheme() {
+  const root = document.documentElement
+  for (const v of ALL_SCHOOL_VARS) root.style.removeProperty(v)
+}

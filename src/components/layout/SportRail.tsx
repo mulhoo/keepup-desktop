@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { NavLink, Link, useMatch } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Trophy, UsersRound, Megaphone, CalendarDays, ChevronDown, BarChart2,
-  Waves, CircleDot, Activity, Flag, Shield, Star, Sparkles, Wind, Target, Upload,
+  Trophy, UsersRound, Megaphone, ChevronDown, BarChart2,
+  Waves, CircleDot, Activity, Flag, Shield, Star, Sparkles, Wind, Target,
 } from 'lucide-react'
 import { fetchSports, type Sport, type SportCoach } from '@/api/sports'
 import { fetchLinkedAccounts, DEMO_BASE, type LinkedAccount } from '@/api/linkedAccounts'
@@ -39,9 +39,7 @@ function sportIcon(name: string): React.ElementType {
 const TEAM_SUBNAV = [
   { to: 'roster',        label: 'Roster',       Icon: UsersRound   },
   { to: 'announcements', label: 'Announcements', Icon: Megaphone    },
-  { to: 'calendar',      label: 'Calendar',      Icon: CalendarDays },
   { to: 'results',       label: 'Results',       Icon: BarChart2    },
-  { to: 'import',        label: 'Import',        Icon: Upload       },
 ]
 
 export function SportRail({ role, collapsed }: { role: string | null; collapsed: boolean }) {
@@ -106,7 +104,7 @@ export function SportRail({ role, collapsed }: { role: string | null; collapsed:
   return (
     <div className="mt-6 pt-4 border-t border-border/50 space-y-0.5">
       {!collapsed && (
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1">My Teams</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1">My Teams</p>
       )}
       {myActiveSports.map(sport => {
         const branding  = getSportBranding(sport.id)
@@ -145,7 +143,7 @@ export function SportRail({ role, collapsed }: { role: string | null; collapsed:
                   <p className="text-xs text-foreground/80 truncate leading-tight group-hover:text-foreground transition-colors">
                     {sport.name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground leading-tight flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground leading-tight flex items-center gap-1">
                     {coachRole === 'head_coach' ? 'Head Coach' : 'Asst. Coach'}
                     <span className="text-muted-foreground/40">·</span>
                     <span className="font-medium text-muted-foreground/70">{schoolAbbr(sport.school_name)}</span>
@@ -181,7 +179,7 @@ export function SportRail({ role, collapsed }: { role: string | null; collapsed:
             {collapsed && (
               <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-md text-xs whitespace-nowrap pointer-events-none opacity-0 group-hover/sport:opacity-100 transition-opacity duration-150">
                 <p className="font-medium text-foreground">{sport.name}</p>
-                <p className="text-[10px] text-muted-foreground">{sport.school_name}</p>
+                <p className="text-xs text-muted-foreground">{sport.school_name}</p>
               </div>
             )}
           </div>

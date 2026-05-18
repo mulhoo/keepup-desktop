@@ -81,14 +81,13 @@ export interface SafetyAuditDbEvent {
   keyword:          string | null
 }
 
-export const searchChats = (params: ChatSearchParams) => {
-  const qs = new URLSearchParams()
-  params.student_names.forEach(n => qs.append('student_names[]', n))
-  qs.set('from', params.from)
-  qs.set('to', params.to)
-  if (params.keyword) qs.set('keyword', params.keyword)
-  return api.get<ChatSearchResponse>(`${base}/chats?${qs}`)
-}
+export const searchChats = (params: ChatSearchParams) =>
+  api.post<ChatSearchResponse>(`${base}/chats/search`, {
+    student_names: params.student_names,
+    from:          params.from,
+    to:            params.to,
+    keyword:       params.keyword ?? null,
+  })
 
 export const fetchSafetyAuditEvents = () =>
   api.get<SafetyAuditDbEvent[]>(`${base}/audit_events`)

@@ -5,18 +5,25 @@ export interface GroupMember {
   name:       string
   first_name: string
   role:       'parent' | 'student' | 'unknown'
+  child_name: string | null
+}
+
+export interface EligibleChild {
+  id:         number
+  first_name: string
 }
 
 export interface EligibleMember {
-  id:        number
-  name:      string
-  role:      'parent' | 'student'
-  child_ids: number[]
+  id:         number
+  name:       string
+  child_name: string | null
+  role:       'parent'
 }
 
 export interface ParentSeason {
   id:               number
   name:             string
+  my_children:      EligibleChild[]
   eligible_members: EligibleMember[]
 }
 
@@ -55,3 +62,6 @@ export const fetchGroupMessages = (channelId: number) =>
 
 export const sendGroupMessage = (channelId: number, content: string) =>
   api.post<{ message: GroupMessage }>(`/demo/channels/${channelId}/messages`, { content })
+
+export const addFamilyGroupMembers = (groupId: number, member_ids: number[]) =>
+  api.post<FamilyGroup>(`/demo/family_groups/${groupId}/add_members`, { member_ids })

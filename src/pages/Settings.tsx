@@ -3,15 +3,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { atLeast } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
-import { Palette, ImageIcon, Link2, Link2Off, Send, X } from 'lucide-react'
+import { Palette, Link2, Link2Off, Send, X } from 'lucide-react'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import ThemeEditor from '@/components/theme/ThemeEditor'
-import SchoolBrandingEditor from '@/components/branding/SchoolBrandingEditor'
-import { useBranding } from '@/contexts/BrandingContext'
-import { useAccessibility, type FontSize } from '@/contexts/AccessibilityContext'
+
+import { useAccessibility, type FontSize, type ColorMode } from '@/contexts/AccessibilityContext'
 import { cn } from '@/lib/utils'
 
 
@@ -58,7 +57,7 @@ function DefaultProfileSection({ demoRole }: { demoRole: string | null }) {
               key={opt.key ?? 'base'}
               className="flex items-center gap-3 p-4 rounded-lg border bg-card"
             >
-              <div className={`w-8 h-8 rounded-md text-[10px] font-bold flex items-center justify-center flex-none border ${
+              <div className={`w-8 h-8 rounded-md text-xs font-bold flex items-center justify-center flex-none border ${
                 isDefault
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-muted text-muted-foreground border-border'
@@ -74,7 +73,7 @@ function DefaultProfileSection({ demoRole }: { demoRole: string | null }) {
                 </p>
               </div>
               {isDefault ? (
-                <span className="text-[10px] font-medium text-primary flex-none">Default</span>
+                <span className="text-xs font-medium text-primary flex-none">Default</span>
               ) : (
                 <Button
                   variant="outline"
@@ -176,7 +175,7 @@ function LinkedAccountsSection() {
       {/* Pending invitations */}
       {allPending.length > 0 && (
         <div className="space-y-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pending</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending</p>
           {allPending.map(inv => (
             <div
               key={inv.id}
@@ -185,7 +184,7 @@ function LinkedAccountsSection() {
               <Send className="w-3.5 h-3.5 text-muted-foreground flex-none" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{inv.email}</p>
-                <p className="text-[10px] text-muted-foreground">Invitation sent — waiting for them to accept</p>
+                <p className="text-xs text-muted-foreground">Invitation sent — waiting for them to accept</p>
               </div>
               <button
                 onClick={() => cancelInvite(inv.id)}
@@ -237,14 +236,74 @@ function LinkedAccountsSection() {
   )
 }
 
-const FONT_SIZES: FontSize[] = ['small', 'medium', 'large']
+const FONT_SIZES: FontSize[] = ['small', 'default', 'large']
 const FONT_SIZE_LABELS: Record<FontSize, string> = {
-  small:  'Small',
-  medium: 'Medium',
-  large:  'Large',
+  small:   'Small',
+  default: 'Default',
+  large:   'Large',
 }
 const FONT_SIZE_SAMPLE_PX: Record<FontSize, number> = {
-  small: 13, medium: 15, large: 17,
+  small: 15, default: 17, large: 19,
+}
+
+const COLOR_MODES: { value: ColorMode; label: string; description: string }[] = [
+  { value: 'light',  label: 'Light',  description: 'White background' },
+  { value: 'dark',   label: 'Dark',   description: 'Dark navy background' },
+  { value: 'school', label: 'School', description: "Your school's brand colors" },
+]
+
+function AppearanceCards({
+  value,
+  onChange,
+  hasSchoolTheme,
+}: {
+  value: ColorMode
+  onChange: (v: ColorMode) => void
+  hasSchoolTheme: boolean
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {COLOR_MODES.map(({ value: mode, label, description }) => {
+        const disabled = mode === 'school' && !hasSchoolTheme
+        const selected = value === mode
+        return (
+          <button
+            key={mode}
+            onClick={() => !disabled && onChange(mode)}
+            disabled={disabled}
+            className={cn(
+              'flex flex-col items-start gap-1.5 py-3 px-3 rounded-lg border transition-colors text-left',
+              selected
+                ? 'border-primary bg-primary/5'
+                : disabled
+                  ? 'border-border bg-muted/40 opacity-50 cursor-not-allowed'
+                  : 'border-border bg-card hover:bg-muted/40',
+            )}
+          >
+            {/* Mini swatch */}
+            <div className={cn(
+              'w-full h-8 rounded-md border overflow-hidden flex gap-px',
+              mode === 'light'  ? 'bg-[#f0f4f8]' :
+              mode === 'dark'   ? 'bg-[#1a2744]' :
+                                  'bg-[#1a1d2e]',
+            )}>
+              <div className={cn(
+                'w-1/3 h-full',
+                mode === 'light'  ? 'bg-[#22447a]' :
+                mode === 'dark'   ? 'bg-[#2c6ea6]' :
+                                    'bg-[#06b6d4]',
+              )} />
+            </div>
+            <span className={cn('text-xs font-semibold', selected ? 'text-primary' : 'text-foreground')}>
+              {label}
+            </span>
+            <span className="text-xs text-muted-foreground leading-tight">{description}</span>
+            {disabled && <span className="text-xs text-muted-foreground italic">Not configured</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 function FontSizeCards({ value, onChange }: { value: FontSize; onChange: (v: FontSize) => void }) {
@@ -271,7 +330,7 @@ function FontSizeCards({ value, onChange }: { value: FontSize; onChange: (v: Fon
             </span>
             <span
               className={cn(selected ? 'text-primary font-semibold' : 'text-muted-foreground')}
-              style={{ fontSize: '10px' }}
+              style={{ fontSize: '12px' }}
             >
               {FONT_SIZE_LABELS[size]}
             </span>
@@ -283,16 +342,15 @@ function FontSizeCards({ value, onChange }: { value: FontSize; onChange: (v: Fon
 }
 
 export default function Settings() {
-  const { demoRole, effectiveRole } = useAuth()
-  const { schoolBranding } = useBranding()
-  const { prefs, setFontSize } = useAccessibility()
+  const { demoRole, effectiveRole, user } = useAuth()
+  const { prefs, setFontSize, setColorMode } = useAccessibility()
+  const isDistrictLevel = effectiveRole === 'district_admin' || effectiveRole === 'super_admin'
+  const hasSchoolTheme  = !!user?.theme && !isDistrictLevel
   const isCoach = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
 
-  const canTheme    = atLeast(effectiveRole, 'athletic_director') && effectiveRole !== 'district_admin'
-  const canBranding = effectiveRole === 'athletic_director' || effectiveRole === 'school_admin'
+  const canTheme = atLeast(effectiveRole, 'athletic_director') && effectiveRole !== 'district_admin'
 
-  const [themeOpen,    setThemeOpen]    = useState(false)
-  const [brandingOpen, setBrandingOpen] = useState(false)
+  const [themeOpen, setThemeOpen] = useState(false)
 
   return (
     <div className="px-10 py-8 max-w-2xl space-y-5">
@@ -303,38 +361,6 @@ export default function Settings() {
 
       {isCoach && <DefaultProfileSection demoRole={demoRole} />}
       {isCoach && <LinkedAccountsSection />}
-
-      {canBranding && (
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold">School Branding</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              School icon and banner shown across the mobile app.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl border bg-muted/50 overflow-hidden flex items-center justify-center flex-none">
-              {schoolBranding.icon_url
-                ? <img src={schoolBranding.icon_url} alt="School icon" className="w-full h-full object-cover" />
-                : <ImageIcon className="w-5 h-5 text-muted-foreground" />
-              }
-            </div>
-            <div className="flex-1 h-14 rounded-xl border bg-muted/50 overflow-hidden flex items-center justify-center">
-              {schoolBranding.banner_url
-                ? <img src={schoolBranding.banner_url} alt="School banner" className="w-full h-full object-cover" />
-                : <span className="text-xs text-muted-foreground">No banner set</span>
-              }
-            </div>
-          </div>
-
-          <Button variant="outline" className="gap-2" onClick={() => setBrandingOpen(true)}>
-            <ImageIcon className="w-4 h-4" />
-            Edit school branding
-          </Button>
-          <SchoolBrandingEditor schoolId={1} open={brandingOpen} onClose={() => setBrandingOpen(false)} />
-        </section>
-      )}
 
       {canTheme && (
         <section className="space-y-3">
@@ -358,6 +384,11 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mt-0.5">
             Customize how KeepUp looks and feels for you. These preferences are saved to your account.
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Appearance</p>
+          <AppearanceCards value={prefs.color_mode} onChange={setColorMode} hasSchoolTheme={hasSchoolTheme} />
         </div>
 
         <div className="space-y-2">

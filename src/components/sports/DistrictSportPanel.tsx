@@ -5,7 +5,6 @@ import { fetchSportDetail, type Sport } from '@/api/sports'
 import { type School } from '@/api/schools'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetBody } from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { CommissionerSection } from './CommissionerSection'
 import { ROLE_LABEL_PLURAL, ROLE_ORDER, SEASON_LABEL } from './SportBadges'
 import { cn } from '@/lib/utils'
 
@@ -48,7 +47,7 @@ function SchoolRosterDialog({ sport, onClose }: { sport: Sport; onClose: () => v
                       <p className={cn('text-sm font-medium leading-none', m.graduated && 'italic')}>
                         {m.first_name} {m.last_name}
                         {m.graduated && (
-                          <span className="ml-2 text-[10px] font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
+                          <span className="ml-2 text-xs font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
                             Graduated
                           </span>
                         )}
@@ -112,11 +111,10 @@ interface DistrictSportPanelProps {
   instances:             Sport[]
   schools:               School[]
   showYear?:             string
-  canManageCommissioner: boolean
   onClose:               () => void
 }
 
-export function DistrictSportPanel({ sportName, season, instances, schools, showYear, canManageCommissioner, onClose }: DistrictSportPanelProps) {
+export function DistrictSportPanel({ sportName, season, instances, schools, showYear, onClose }: DistrictSportPanelProps) {
   const [rosterSport, setRosterSport] = useState<Sport | null>(null)
   const schoolMap      = Object.fromEntries(schools.map(s => [s.id, s]))
   const totalAthletes  = instances.reduce((sum, s) => sum + s.athlete_count, 0)
@@ -136,13 +134,6 @@ export function DistrictSportPanel({ sportName, season, instances, schools, show
             </SheetDescription>
           </SheetHeader>
           <SheetBody className="space-y-4">
-            {representative && (
-              <CommissionerSection
-                representativeSportId={representative.id}
-                commissioner={representative.commissioner}
-                canManage={canManageCommissioner}
-              />
-            )}
             <div className="space-y-3">
               {instances.map(sport => (
                 <SchoolSportCard

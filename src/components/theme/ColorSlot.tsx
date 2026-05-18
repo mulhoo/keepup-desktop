@@ -74,7 +74,7 @@ export default function ColorSlot({ label, value, onChange }: Props) {
                     max={255}
                     type="number"
                   />
-                  <span className="text-[10px] text-muted-foreground uppercase">{ch}</span>
+                  <span className="text-xs text-muted-foreground uppercase">{ch}</span>
                 </div>
               ))}
             </div>

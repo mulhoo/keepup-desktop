@@ -5,9 +5,10 @@ import {
   ShieldCheck, AlertTriangle, CheckCircle2,
 } from 'lucide-react'
 import {
-  fetchFamilyChats, createViewRequest,
+  fetchFamilyChats, createViewRequest, alertCoachConversationAD,
   type ChildChats, type ParentConversation, type AccessRequest,
 } from '@/api/family'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 function timeAgo(iso: string) {
@@ -31,14 +32,118 @@ function timeLeft(iso: string) {
 }
 
 
-function LockedConversation({
+function CoachLockedConversation({
+  convId,
+  childFirstName,
+  coachName,
+  staffRole,
+}: {
+  convId:         number
+  childFirstName: string
+  coachName:      string
+  staffRole:      string | null
+}) {
+  const [notified,    setNotified]    = useState(false)
+  const [dialogOpen,  setDialogOpen]  = useState(false)
+  const [note,        setNote]        = useState('')
+
+  const mutation = useMutation({
+    mutationFn: (note: string) => alertCoachConversationAD(convId, note),
+    onSuccess: () => {
+      setNotified(true)
+      setDialogOpen(false)
+      setNote('')
+    },
+  })
+
+  return (
+    <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
+      <div className="flex items-center gap-3">
+        <Lock className="w-4 h-4 text-muted-foreground flex-none" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium">{childFirstName} &amp; {coachName}</p>
+            {staffRole && (
+              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full flex-none">
+                <ShieldCheck className="w-2.5 h-2.5" />
+                {staffRole}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Coach conversations are confidential in order to maintain the coach-athlete relationship. If you have any concerns, please contact your child's AD.
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t pt-3 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Your Athletic Director can review this conversation privately.
+        </p>
+        {notified ? (
+          <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium flex-none">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            AD notified
+          </span>
+        ) : (
+          <button
+            onClick={() => setDialogOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors flex-none"
+          >
+            <AlertTriangle className="w-3 h-3" /> Alert AD
+          </button>
+        )}
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md gap-0 p-0">
+          <DialogHeader className="px-5 py-4 border-b">
+            <DialogTitle>Alert Athletic Director</DialogTitle>
+            <DialogDescription>
+              Leave a note for your AD explaining your concern. They will review the conversation privately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-5 py-4 space-y-3">
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Describe your concern…"
+              rows={4}
+              className="w-full text-sm rounded-md border bg-background px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setDialogOpen(false); setNote('') }}
+                className="px-3 py-1.5 rounded-md text-sm border hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => mutation.mutate(note)}
+                disabled={!note.trim() || mutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+              >
+                {mutation.isPending
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending…</>
+                  : <><AlertTriangle className="w-3.5 h-3.5" /> Send to AD</>
+                }
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function PeerLockedConversation({
   childId,
   childFirstName,
   accessRequest,
 }: {
-  childId:       number
+  childId:        number
   childFirstName: string
-  accessRequest: AccessRequest | null
+  accessRequest:  AccessRequest | null
 }) {
   const [showForm, setShowForm] = useState(false)
   const [reason, setReason]     = useState('')
@@ -165,7 +270,7 @@ function ConversationThread({
               {childFirstName} &amp; {other.name}
             </p>
             {other.staff_role && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full flex-none">
+              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full flex-none">
                 <ShieldCheck className="w-2.5 h-2.5" />
                 {other.staff_role}
               </span>
@@ -179,7 +284,7 @@ function ConversationThread({
         </div>
         <div className="flex items-center gap-2 flex-none">
           {conv.last_message && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {timeAgo(conv.last_message.sent_at)}
             </span>
           )}
@@ -200,7 +305,7 @@ function ConversationThread({
               key={msg.id}
               className={cn('flex flex-col max-w-[75%]', msg.is_child ? 'ml-auto items-end' : 'mr-auto items-start')}
             >
-              <span className="text-[10px] text-muted-foreground mb-0.5 px-1">
+              <span className="text-xs text-muted-foreground mb-0.5 px-1">
                 {msg.is_child ? childFirstName : other.name} · {timeAgo(msg.sent_at)}
               </span>
               <div
@@ -243,22 +348,36 @@ function ChildMessages({ child }: { child: ChildChats }) {
         {child.conversations.length === 0 && (
           <p className="text-sm text-muted-foreground">No conversations yet.</p>
         )}
-        {child.conversations.map(conv =>
-          conv.access.type === 'locked' ? (
-            <LockedConversation
-              key={conv.id}
-              childId={child.child_id}
-              childFirstName={child.child_first_name}
-              accessRequest={child.access_request}
-            />
-          ) : (
+        {child.conversations.map(conv => {
+          if (conv.access.type === 'coach') {
+            return (
+              <CoachLockedConversation
+                key={conv.id}
+                convId={conv.id}
+                childFirstName={child.child_first_name}
+                coachName={conv.other_participant.name}
+                staffRole={conv.other_participant.staff_role}
+              />
+            )
+          }
+          if (conv.access.type === 'locked') {
+            return (
+              <PeerLockedConversation
+                key={conv.id}
+                childId={child.child_id}
+                childFirstName={child.child_first_name}
+                accessRequest={child.access_request}
+              />
+            )
+          }
+          return (
             <ConversationThread
               key={conv.id}
               conv={conv}
               childFirstName={child.child_first_name}
             />
           )
-        )}
+        })}
       </div>
     </div>
   )
@@ -275,11 +394,14 @@ function ParentGate({ children }: { children: React.ReactNode }) {
           <Lock className="w-6 h-6 text-muted-foreground" />
         </div>
         <div className="text-center space-y-1 max-w-sm">
-          <p className="font-semibold">Messages are locked</p>
+          <p className="font-semibold">Safety &amp; Messaging</p>
           <p className="text-sm text-muted-foreground">
-            Coach conversations are always visible. Peer messages are private by default — you can request AD access if you have a concern.
+            Peer messages are private by default — you can request AD access if you have a concern. Coach conversations are always confidential.
           </p>
         </div>
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-md px-3 py-2 max-w-sm text-center">
+          <span className="font-semibold">Demo:</span> click below to view. In production, this gate requires two-factor authentication via email code.
+        </p>
         <button
           onClick={() => setUnlocked(true)}
           className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -320,9 +442,9 @@ export default function FamilyMessages() {
     <ParentGate>
       <div className="px-10 py-8 max-w-4xl space-y-8">
         <div>
-          <h1 className="text-2xl font-bold">Messages</h1>
+          <h1 className="text-2xl font-bold">Safety</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Coach conversations are visible. Peer messages are private unless flagged by AI or approved by your Athletic Director.
+            Peer messages are private unless flagged by AI or approved by your Athletic Director. Coach conversations are confidential — contact your AD if you have a concern.
           </p>
         </div>
 

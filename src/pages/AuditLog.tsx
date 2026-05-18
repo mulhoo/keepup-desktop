@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Info, Loader2, ChevronDown, ChevronRight, Shield } from 'lucide-react'
+import { AlertTriangle, Info, Loader2, ChevronDown, ChevronRight, Shield, ClipboardList } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchAuditLog, type AuditEntry } from '@/api/auditLog'
 import { fetchSafetyAuditEvents, type SafetyAuditDbEvent } from '@/api/safety'
-import { useSafety } from '@/contexts/SafetyContext'
+import { useSafety, type SafetyAuditEvent } from '@/contexts/SafetyContext'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABEL: Record<string, string> = {
@@ -112,9 +112,56 @@ function SafetyEventRow({ event }: { event: SafetyAuditDbEvent }) {
   )
 }
 
+const DECISION_LABEL: Record<string, string> = {
+  alert_viewed:               'Alert viewed',
+  parents_notified:           'Parents notified',
+  ad_notified:                'Athletic director notified',
+  district_notified:          'District admin notified',
+  view_request_approved:      'Chat access approved',
+  view_request_denied:        'Chat access denied',
+  data_destruction_requested: 'Data destruction requested',
+  message_deleted_everywhere: 'Message deleted from all channels',
+  chat_search:                'Chat search performed',
+}
+
+const DECISION_COLORS: Record<string, string> = {
+  alert_viewed:               'text-blue-600 dark:text-blue-400',
+  parents_notified:           'text-emerald-600 dark:text-emerald-400',
+  ad_notified:                'text-emerald-600 dark:text-emerald-400',
+  district_notified:          'text-emerald-600 dark:text-emerald-400',
+  view_request_approved:      'text-emerald-600 dark:text-emerald-400',
+  view_request_denied:        'text-red-500',
+  data_destruction_requested: 'text-red-500',
+  message_deleted_everywhere: 'text-red-500',
+  chat_search:                'text-amber-600 dark:text-amber-400',
+}
+
+const ADMIN_ACTION_TYPES = new Set([
+  'alert_viewed', 'parents_notified', 'ad_notified', 'district_notified',
+  'view_request_approved', 'view_request_denied', 'data_destruction_requested',
+  'message_deleted_everywhere', 'chat_search',
+])
+
+function DecisionRow({ event }: { event: SafetyAuditEvent }) {
+  const label = DECISION_LABEL[event.type] ?? event.type
+  const color = DECISION_COLORS[event.type] ?? 'text-muted-foreground'
+  return (
+    <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="px-4 py-3 flex items-start gap-3">
+        <ClipboardList className={cn('w-3.5 h-3.5 mt-0.5 flex-none', color)} />
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <p className={cn('text-sm font-medium', color)}>{label}</p>
+          {event.notes && <p className="text-xs text-muted-foreground">{event.notes}</p>}
+          <p className="text-xs text-muted-foreground">{formatTime(event.occurred_at)}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AuditLog() {
   const { effectiveRole } = useAuth()
-  const { isSafetyAuthenticated } = useSafety()
+  const { isSafetyAuthenticated, safetyEvents } = useSafety()
   const isDistrictAdmin = effectiveRole === 'district_admin'
 
   const accessedAt = useMemo(() => new Date(), [])
@@ -206,6 +253,18 @@ export default function AuditLog() {
           {filtered.map(entry => (
             <AuditRow key={entry.id} entry={entry} />
           ))}
+        </div>
+      )}
+
+      {/* Decision log (in-session) */}
+      {safetyEvents.filter(e => ADMIN_ACTION_TYPES.has(e.type)).length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Decision Log — This Session</h2>
+          <div className="space-y-2">
+            {safetyEvents
+              .filter(e => ADMIN_ACTION_TYPES.has(e.type))
+              .map(event => <DecisionRow key={event.id} event={event} />)}
+          </div>
         </div>
       )}
 

@@ -46,7 +46,7 @@ export interface ParentMessage {
 }
 
 export type ConversationAccess =
-  | { type: 'staff' }
+  | { type: 'coach' }
   | { type: 'flagged' }
   | { type: 'approved'; expires_at: string; approved_by: string | null }
   | { type: 'locked' }
@@ -95,6 +95,15 @@ export async function createViewRequest(child_id: number, reason: string): Promi
 
 export async function fetchAdViewRequests(): Promise<AdViewRequest[]> {
   return api.get<AdViewRequest[]>('/demo/parent-view-requests')
+}
+
+export interface CoachAlertResult {
+  notified_at: string
+  ad_count:    number
+}
+
+export async function alertCoachConversationAD(convId: number, note: string): Promise<CoachAlertResult> {
+  return api.post<CoachAlertResult>(`/demo/coach-conversations/${convId}/alert_ad`, { note })
 }
 
 export async function approveViewRequest(id: number): Promise<AdViewRequest> {

@@ -18,15 +18,13 @@ export interface LoginResponse {
 }
 
 export const DEMO_ROLES = [
-  { key: 'district_admin',      label: 'District Admin',      description: 'Hajos School District' },
-  { key: 'school_admin',        label: 'School Admin',        description: 'Alfred High School' },
-  { key: 'athletic_director',   label: 'Athletic Director',   description: 'Alfred High School' },
-  { key: 'sports_commissioner', label: 'Sports Commissioner', description: 'Swimming — KingCo Conference' },
-  { key: 'head_coach',          label: 'Head Coach',          description: 'Varsity Swimming' },
-  { key: 'assistant_coach',     label: 'Assistant Coach',     description: 'Varsity Swimming' },
-  { key: 'student_captain',     label: 'Student Captain',     description: 'Varsity Swimming' },
-  { key: 'student',             label: 'Student',             description: 'Varsity Swimming' },
-  { key: 'parent',              label: 'Parent',              description: 'Alfred High School' },
+  { key: 'district_admin',    label: 'District Admin',    description: 'Hajos School District' },
+  { key: 'school_admin',      label: 'School Admin',      description: 'Alfred High School' },
+  { key: 'athletic_director', label: 'Athletic Director', description: 'Alfred High School' },
+  { key: 'head_coach',        label: 'Head Coach',        description: 'Varsity Swimming' },
+  { key: 'assistant_coach',   label: 'Assistant Coach',   description: 'Varsity Swimming' },
+  { key: 'student',           label: 'Student',           description: 'Varsity Swimming' },
+  { key: 'parent',            label: 'Parent',            description: 'Alfred High School' },
 ] as const
 
 export type DemoRole = typeof DEMO_ROLES[number]['key']
@@ -45,7 +43,12 @@ export async function logout(): Promise<void> {
   await api.delete('/auth/session').catch(() => {})
 }
 
+export async function resetDemoData(): Promise<void> {
+  await api.post('/demo/reset').catch(() => {})
+}
+
 export async function resetDemo(): Promise<void> {
+  await resetDemoData()
   clearDemoToken()
   await api.delete('/demo/session').catch(() => {})
 }

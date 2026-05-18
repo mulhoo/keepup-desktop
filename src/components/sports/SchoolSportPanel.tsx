@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, Paintbrush, Loader2, Pencil, Check, MapPin, FileText } from 'lucide-react'
+import { Trophy, Loader2, Pencil, Check, MapPin, FileText } from 'lucide-react'
 import { fetchSportDetail, sportDisplayName } from '@/api/sports'
 import { Sheet, SheetContent, SheetBody } from '@/components/ui/sheet'
 import { useBranding } from '@/contexts/BrandingContext'
-import SportBrandingEditor from '@/components/branding/SportBrandingEditor'
 import { MemberGroup, ROLE_ORDER, SEASON_LABEL } from './SportBadges'
 
 interface SchoolSportPanelProps {
-  sportId:         number
-  pastYears:       string[]
-  canEditBranding: boolean
-  canEdit:         boolean
-  onClose:         () => void
+  sportId:   number
+  pastYears: string[]
+  canEdit:   boolean
+  onClose:   () => void
 }
 
-export function SchoolSportPanel({ sportId, pastYears, canEditBranding, canEdit, onClose }: SchoolSportPanelProps) {
-  const [brandingOpen, setBrandingOpen] = useState(false)
-  const [editing, setEditing]           = useState(false)
+export function SchoolSportPanel({ sportId, pastYears, canEdit, onClose }: SchoolSportPanelProps) {
+  const [editing, setEditing] = useState(false)
   const [saved, setSaved]               = useState(false)
   const [venue, setVenue]               = useState('')
   const [notes, setNotes]               = useState('')
@@ -64,15 +61,6 @@ export function SchoolSportPanel({ sportId, pastYears, canEditBranding, canEdit,
                 <Trophy className="w-5 h-5 text-primary" />
               )}
             </div>
-            {canEditBranding && (
-              <button
-                onClick={() => setBrandingOpen(true)}
-                className="absolute top-2 right-2 flex items-center gap-1.5 text-xs bg-background/80 backdrop-blur-sm px-2.5 py-1.5 rounded-md hover:bg-background transition-colors text-foreground"
-              >
-                <Paintbrush className="w-3 h-3" />
-                Edit branding
-              </button>
-            )}
           </div>
 
           {/* Header info */}
@@ -95,7 +83,7 @@ export function SchoolSportPanel({ sportId, pastYears, canEditBranding, canEdit,
                 ].map(({ val, label }) => (
                   <div key={label} className="flex items-baseline gap-1">
                     <span className="text-2xl font-bold tabular-nums leading-none">{val}</span>
-                    <span className="text-[11px] font-semibold text-muted-foreground">{label}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{label}</span>
                   </div>
                 ))}
                 <span className="text-xs text-muted-foreground ml-1">this season</span>
@@ -204,14 +192,6 @@ export function SchoolSportPanel({ sportId, pastYears, canEditBranding, canEdit,
         </SheetContent>
       </Sheet>
 
-      {data && brandingOpen && (
-        <SportBrandingEditor
-          sportId={sportId}
-          sportName={sportDisplayName(data)}
-          open={brandingOpen}
-          onClose={() => setBrandingOpen(false)}
-        />
-      )}
     </>
   )
 }

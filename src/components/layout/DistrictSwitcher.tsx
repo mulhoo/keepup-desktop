@@ -35,15 +35,14 @@ export function DistrictSwitcher({ demoRole }: { demoRole: string | null }) {
 
   const base         = DEMO_BASE[demoRole ?? '']
   const baseDistrict = base?.district_name ?? ''
-  const accepted     = linked.filter((a: LinkedAccount) => a.status === 'accepted')
-  const crossDistrict = accepted.filter((a: LinkedAccount) => a.district_name !== baseDistrict)
+  const otherSchools = linked.filter((a: LinkedAccount) => a.status === 'accepted')
 
-  if (!isCoach || crossDistrict.length === 0) return null
+  if (!isCoach || otherSchools.length === 0) return null
 
   type Option = { key: string | null; schoolName: string; district: string; account: LinkedAccount | null; role: string }
   const options: Option[] = [
     { key: null, schoolName: base?.school_name ?? 'Home', district: baseDistrict, account: null, role: demoRole ?? '' },
-    ...crossDistrict.map((a: LinkedAccount) => ({
+    ...otherSchools.map((a: LinkedAccount) => ({
       key: linkedAccountKey(a), schoolName: a.school_name, district: a.district_name, account: a, role: a.role,
     })),
   ]
@@ -54,17 +53,17 @@ export function DistrictSwitcher({ demoRole }: { demoRole: string | null }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white border border-white/25 hover:border-white/50 rounded-md px-2.5 py-1 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white border border-foreground/20 dark:border-white/25 hover:border-foreground/40 dark:hover:border-white/50 rounded-md px-2.5 py-1 transition-colors"
       >
         <ArrowLeftRight className="w-3 h-3" />
-        Switch district
+        Switch school
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm gap-0 p-0">
           <DialogHeader className="px-5 py-4 border-b">
-            <DialogTitle>Switch District</DialogTitle>
-            <DialogDescription>Select which district to work from.</DialogDescription>
+            <DialogTitle>Switch School</DialogTitle>
+            <DialogDescription>Select which school account to work from.</DialogDescription>
           </DialogHeader>
           <div className="p-3 space-y-1.5">
             {options.map(opt => {
@@ -103,7 +102,7 @@ export function DistrictSwitcher({ demoRole }: { demoRole: string | null }) {
                     </p>
                   </div>
                   {isCurrent && (
-                    <span className="text-[10px] font-semibold text-primary flex-none">Current</span>
+                    <span className="text-xs font-semibold text-primary flex-none">Current</span>
                   )}
                 </button>
               )

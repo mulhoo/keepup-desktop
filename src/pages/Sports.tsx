@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -24,11 +24,13 @@ export default function Sports() {
   const { user, effectiveRole, isAuthenticated } = useAuth()
   const { activeProfile }  = useProfile()
   const [searchParams]     = useSearchParams()
+  const navigate           = useNavigate()
 
-  const isDistrictAdmin      = effectiveRole === 'district_admin'
-  const isSportsCommissioner = effectiveRole === 'sports_commissioner'
-  const isAthleticDirector   = effectiveRole === 'athletic_director'
-  const isCoach              = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
+  const isDistrictAdmin    = effectiveRole === 'district_admin'
+  const isAthleticDirector = effectiveRole === 'athletic_director'
+  const isCoach            = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
+  const isSchoolAdmin      = effectiveRole === 'school_admin'
+  const goToRoster         = isAthleticDirector || isSchoolAdmin
 
   const initSportId = Number(searchParams.get('sport')) || null
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(
@@ -46,7 +48,7 @@ export default function Sports() {
   const { data: schools = [] } = useQuery({
     queryKey: ['schools'],
     queryFn:  fetchSchools,
-    enabled:  (isDistrictAdmin || isSportsCommissioner) && !activeProfile,
+    enabled:  isDistrictAdmin && !activeProfile,
   })
 
   const effectiveSports: EffectiveSport[] = activeProfile
@@ -55,9 +57,7 @@ export default function Sports() {
       ? sports
           .filter(s => s.coaches.some(c => c.id === user.id))
           .map(s => ({ ...s, coach_role: s.coaches.find(c => c.id === user.id)?.role as 'head_coach' | 'assistant_coach' | undefined }))
-      : isSportsCommissioner
-        ? sports.filter(s => s.commissioner !== null).map(s => ({ ...s }))
-        : sports.map(s => ({ ...s }))
+      : sports.map(s => ({ ...s }))
 
   const isLoading   = sportsLoading && !activeProfile
   const schoolYears = [...new Set(effectiveSports.map(s => s.school_year))].sort().reverse()
@@ -95,9 +95,7 @@ export default function Sports() {
       <div>
         <h1 className="text-2xl font-bold">Sports</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {isDistrictAdmin      ? 'All sports across the district.' :
-           isSportsCommissioner ? 'Sports you oversee across the conference.' :
-                                  'Teams and rosters at your school.'}
+          {isDistrictAdmin ? 'All sports across the district.' : 'Teams and rosters at your school.'}
         </p>
       </div>
 
@@ -151,8 +149,8 @@ export default function Sports() {
         </div>
       )}
 
-      {/* District admin / commissioner: grouped multi-school view */}
-      {(isDistrictAdmin || isSportsCommissioner) && !isLoading && (
+      {/* District admin: grouped multi-school view */}
+      {isDistrictAdmin && !isLoading && (
         <div className="space-y-10">
           {timeline.map(({ year, items }) => {
             const isPast = year !== currentYear
@@ -188,40 +186,36 @@ export default function Sports() {
         </div>
       )}
 
-      {/* School-level: flat active / timeline past */}
-      {!isDistrictAdmin && !isSportsCommissioner && !isLoading && !showPast && (
-        <div className="space-y-2">
-          {schoolSportGroups.map(g => g.current ? (
-            <SportCard
-              key={g.name}
-              sport={g.current}
-              coachRole={isCoach ? g.current.coach_role : undefined}
-              onClick={() => setActivePanel({ type: 'school', sportId: g.current!.id, pastYears: g.pastYears })}
-            />
-          ) : null)}
-          {schoolSportGroups.length === 0 && (
-            <div className="rounded-lg border p-6 text-sm text-muted-foreground text-center">No sports found.</div>
-          )}
-        </div>
-      )}
-
-      {!isDistrictAdmin && !isSportsCommissioner && !isLoading && showPast && (
+      {/* School-level: current year always visible, past years shown when toggled */}
+      {!isDistrictAdmin && !isLoading && (
         <div className="space-y-10">
-          {timeline.map(({ year, items }) => (
-            <div key={year} className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">{year}</h2>
-              <div className="space-y-2">
-                {items.sort((a, b) => a.name.localeCompare(b.name)).map(s => (
-                  <SportCard
-                    key={s.id}
-                    sport={s}
-                    coachRole={isCoach ? s.coach_role : undefined}
-                    onClick={() => setActivePanel({ type: 'school', sportId: s.id, pastYears: [] })}
-                  />
-                ))}
+          {timeline.map(({ year, items }) => {
+            const isPast = year !== currentYear
+            if (isPast && !showPast) return null
+            const pastYearsForSport = schoolSportGroups.reduce<Record<number, string[]>>((acc, g) => {
+              if (g.current) acc[g.current.id] = g.pastYears
+              return acc
+            }, {})
+            return (
+              <div key={year} className="space-y-3">
+                <h2 className="text-sm font-semibold text-muted-foreground">{year}</h2>
+                <div className="space-y-2">
+                  {items.sort((a, b) => a.name.localeCompare(b.name)).map(s => (
+                    <SportCard
+                      key={s.id}
+                      sport={s}
+                      coachRole={isCoach ? s.coach_role : undefined}
+                      onClick={() =>
+                        goToRoster
+                          ? navigate(`/dashboard/team/${s.id}/roster`)
+                          : setActivePanel({ type: 'school', sportId: s.id, pastYears: pastYearsForSport[s.id] ?? [] })
+                      }
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {timeline.length === 0 && (
             <div className="rounded-lg border p-6 text-sm text-muted-foreground text-center">No sports found.</div>
           )}
@@ -232,7 +226,6 @@ export default function Sports() {
         <SchoolSportPanel
           sportId={activePanel.sportId}
           pastYears={activePanel.pastYears}
-          canEditBranding={effectiveRole === 'head_coach' || isAthleticDirector}
           canEdit={isAthleticDirector}
           onClose={() => setActivePanel(null)}
         />
@@ -244,7 +237,6 @@ export default function Sports() {
           instances={districtPanelInstances}
           schools={schools}
           showYear={activePanel.showYear}
-          canManageCommissioner={isDistrictAdmin && !isSportsCommissioner}
           onClose={() => setActivePanel(null)}
         />
       )}

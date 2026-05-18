@@ -29,7 +29,7 @@ export function SportCard({ sport, coachRole, onClick }: {
           <SeasonBadge season={sport.season} />
           {coachRole && (
             <span className={cn(
-              'text-[10px] font-semibold px-1.5 py-0.5 rounded flex-none',
+              'text-xs font-semibold px-1.5 py-0.5 rounded flex-none',
               coachRole === 'head_coach'
                 ? 'bg-primary/10 text-primary'
                 : 'bg-muted text-muted-foreground'

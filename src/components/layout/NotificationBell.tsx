@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Shield, AlertTriangle, X, CheckCheck } from 'lucide-react'
+import { Shield, AlertTriangle, X, CheckCheck, ChevronRight } from 'lucide-react'
+import bellBlue from '@/assets/icons/blue/bell.png'
+import bellNavy from '@/assets/icons/navy/bell.png'
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type AppNotification } from '@/api/notifications'
 import { cn } from '@/lib/utils'
 
@@ -16,13 +19,23 @@ function timeAgo(iso: string) {
 function NotifIcon({ type }: { type: string }) {
   if (type === 'safety_chat_access')
     return <Shield className="w-4 h-4 text-amber-500 flex-none mt-0.5" />
+  if (type === 'questionable_review')
+    return <AlertTriangle className="w-4 h-4 text-amber-400 flex-none mt-0.5" />
   return <AlertTriangle className="w-4 h-4 text-red-500 flex-none mt-0.5" />
+}
+
+function destinationFor(type: string) {
+  if (type === 'parent_coach_alert')  return '/dashboard/safety/chats'
+  if (type === 'safety_chat_access')  return '/dashboard/audit-log'
+  if (type === 'safety_flag')         return '/dashboard/safety/chats'
+  return '/dashboard/alerts'
 }
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const qc  = useQueryClient()
+  const ref      = useRef<HTMLDivElement>(null)
+  const qc       = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: notifications = [] } = useQuery({
     queryKey:      ['notifications'],
@@ -64,13 +77,14 @@ export function NotificationBell() {
         onClick={() => setOpen(v => !v)}
         className={cn(
           'relative flex items-center justify-center w-8 h-8 rounded-md transition-colors',
-          open ? 'bg-white/20' : 'hover:bg-white/10',
+          open ? 'bg-foreground/10 dark:bg-white/20' : 'hover:bg-foreground/8 dark:hover:bg-white/10',
         )}
         aria-label="Notifications"
       >
-        <Bell className="w-4 h-4 text-white/70" />
+        <img src={bellNavy} alt="" className="w-4 h-4 opacity-70 dark:hidden" style={{ objectFit: 'contain' }} />
+        <img src={bellBlue} alt="" className="w-4 h-4 opacity-70 hidden dark:block" style={{ objectFit: 'contain' }} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -106,8 +120,16 @@ export function NotificationBell() {
               {notifications.map(n => (
                 <div
                   key={n.id}
+                  onClick={() => {
+                    if (!n.read) markRead(n.id)
+                    setOpen(false)
+                    const activityId = n.metadata?.activity_id as number | undefined
+                    navigate(destinationFor(n.notification_type), {
+                      state: activityId ? { focusActivityId: activityId } : undefined,
+                    })
+                  }}
                   className={cn(
-                    'px-4 py-3 flex gap-3 transition-colors group',
+                    'px-4 py-3 flex gap-3 transition-colors group cursor-pointer hover:bg-accent/40',
                     !n.read && 'bg-accent/20',
                   )}
                 >
@@ -117,7 +139,7 @@ export function NotificationBell() {
                       <p className="text-xs font-semibold leading-snug">{n.title}</p>
                       {!n.read ? (
                         <button
-                          onClick={() => markRead(n.id)}
+                          onClick={(e) => { e.stopPropagation(); markRead(n.id) }}
                           title="Mark as read"
                           className="flex-none w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 hover:scale-150 transition-transform"
                         />
@@ -127,15 +149,8 @@ export function NotificationBell() {
                       <p className="text-xs text-muted-foreground leading-snug line-clamp-2">{n.body}</p>
                     )}
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] text-muted-foreground">{timeAgo(n.created_at)}</p>
-                      {!n.read && (
-                        <button
-                          onClick={() => markRead(n.id)}
-                          className="text-[10px] text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          Mark as read
-                        </button>
-                      )}
+                      <p className="text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
+                      <ChevronRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </div>

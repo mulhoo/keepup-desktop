@@ -8,6 +8,7 @@ import { searchChats, flagConversation, type ChatStudentResult, type ChatMessage
 import { useSafety } from '@/contexts/SafetyContext'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
+import { getDestroyedIds } from '@/lib/destroyedStudents'
 
 function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -31,7 +32,9 @@ function HighlightedText({ text, keyword }: { text: string; keyword: string }) {
   )
 }
 
-function MessageRow({ msg, keyword }: { msg: ChatMessage; keyword: string }) {
+function MessageRow({ msg, keyword, destroyedName }: { msg: ChatMessage; keyword: string; destroyedName?: string }) {
+  const isDestroyed = !!destroyedName && msg.sender_name === destroyedName
+  const displayName = isDestroyed ? 'Former Student' : msg.sender_name
   return (
     <div className={cn(
       'px-4 py-2.5 border-b last:border-0 flex gap-3',
@@ -44,15 +47,15 @@ function MessageRow({ msg, keyword }: { msg: ChatMessage; keyword: string }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="text-xs font-semibold">{msg.sender_name}</span>
-          <span className="text-[10px] text-muted-foreground border rounded px-1">{msg.sender_role}</span>
-          <span className="text-[10px] text-muted-foreground ml-auto">{formatMsgTime(msg.sent_at)}</span>
+          <span className={cn('text-xs font-semibold', isDestroyed && 'italic text-muted-foreground')}>{displayName}</span>
+          <span className="text-xs text-muted-foreground border rounded px-1">{isDestroyed ? 'student' : msg.sender_role}</span>
+          <span className="text-xs text-muted-foreground ml-auto">{formatMsgTime(msg.sent_at)}</span>
         </div>
         <p className={cn('text-sm leading-snug', msg.deleted && 'italic text-muted-foreground')}>
           {msg.deleted ? '[Message deleted]' : <HighlightedText text={msg.content} keyword={keyword} />}
         </p>
         {msg.flag_action && (
-          <span className="mt-0.5 inline-block text-[10px] text-red-600 dark:text-red-400 font-medium">
+          <span className="mt-0.5 inline-block text-xs text-red-600 dark:text-red-400 font-medium">
             Action: {msg.flag_action}
           </span>
         )}
@@ -159,11 +162,12 @@ function FlagModal({ target, onClose }: { target: FlagTarget; onClose: () => voi
 }
 
 function ChannelAccordion({
-  channel, keyword, studentName,
+  channel, keyword, studentName, destroyedName,
 }: {
-  channel:     ChatStudentResult['channels'][0]
-  keyword:     string
-  studentName: string
+  channel:      ChatStudentResult['channels'][0]
+  keyword:      string
+  studentName:  string
+  destroyedName?: string
 }) {
   const [open,      setOpen]      = useState(true)
   const [flagging,  setFlagging]  = useState(false)
@@ -180,10 +184,10 @@ function ChannelAccordion({
             {open ? <ChevronDown className="w-3.5 h-3.5 flex-none text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 flex-none text-muted-foreground" />}
             <MessageSquare className="w-3.5 h-3.5 flex-none text-muted-foreground" />
             <span className="text-sm font-medium flex-1">#{channel.channel_name}</span>
-            {channel.sport && <span className="text-[10px] text-muted-foreground">{channel.sport}</span>}
+            {channel.sport && <span className="text-xs text-muted-foreground">{channel.sport}</span>}
             <span className="text-xs text-muted-foreground">{channel.messages.length} msg{channel.messages.length !== 1 ? 's' : ''}</span>
             {flaggedCount > 0 && (
-              <span className="text-[10px] text-red-600 font-medium ml-1">{flaggedCount} flagged</span>
+              <span className="text-xs text-red-600 font-medium ml-1">{flaggedCount} flagged</span>
             )}
           </button>
           <button
@@ -197,7 +201,7 @@ function ChannelAccordion({
         {open && (
           <div className="bg-card">
             {channel.messages.map(msg => (
-              <MessageRow key={msg.id} msg={msg} keyword={keyword} />
+              <MessageRow key={msg.id} msg={msg} keyword={keyword} destroyedName={destroyedName} />
             ))}
           </div>
         )}
@@ -215,6 +219,7 @@ function ChannelAccordion({
 
 export default function ChatViewer() {
   const { logChatSearch } = useSafety()
+  const destroyedIds = getDestroyedIds()
 
   const today    = format(new Date(), 'yyyy-MM-dd')
   const thirtyAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd')
@@ -328,18 +333,33 @@ export default function ChatViewer() {
             </div>
           )}
 
-          {results.map(student => (
-            <div key={student.student_id} className="space-y-3">
-              <h3 className="text-sm font-semibold">{student.student_name}</h3>
-              {student.channels.length === 0 ? (
-                <p className="text-sm text-muted-foreground pl-1">No messages in this date range.</p>
-              ) : (
-                student.channels.map(channel => (
-                  <ChannelAccordion key={channel.channel_id} channel={channel} keyword={keyword} studentName={student.student_name} />
-                ))
-              )}
-            </div>
-          ))}
+          {results.map(student => {
+            const isDestroyed = destroyedIds.has(student.student_id)
+            const displayName = isDestroyed ? 'Former Student' : student.student_name
+            return (
+              <div key={student.student_id} className="space-y-3">
+                <h3 className={cn('text-sm font-semibold', isDestroyed && 'italic text-muted-foreground')}>
+                  {displayName}
+                  {isDestroyed && (
+                    <span className="ml-2 not-italic text-xs font-normal bg-muted px-1.5 py-0.5 rounded">data removed</span>
+                  )}
+                </h3>
+                {student.channels.length === 0 ? (
+                  <p className="text-sm text-muted-foreground pl-1">No messages in this date range.</p>
+                ) : (
+                  student.channels.map(channel => (
+                    <ChannelAccordion
+                      key={channel.channel_id}
+                      channel={channel}
+                      keyword={keyword}
+                      studentName={student.student_name}
+                      destroyedName={isDestroyed ? student.student_name : undefined}
+                    />
+                  ))
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

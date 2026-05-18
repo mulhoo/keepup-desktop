@@ -53,7 +53,7 @@ export function MemberGroup({ role, members }: { role: MemberRole; members: Spor
             <p className={cn('text-sm font-medium leading-none', m.graduated && 'italic')}>
               {m.first_name} {m.last_name}
               {m.graduated && (
-                <span className="ml-2 text-[10px] font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
+                <span className="ml-2 text-xs font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
                   Graduated
                 </span>
               )}

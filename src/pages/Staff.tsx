@@ -101,7 +101,7 @@ function MultiSelectDropdown({
       >
         {label}
         {count > 0 && (
-          <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+          <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-xs font-bold">
             {count}
           </span>
         )}
@@ -167,7 +167,7 @@ function StaffRow({
       <td className="px-4 py-2.5 font-medium text-sm">{entry.last_name}</td>
       <td className="px-4 py-2.5 font-medium text-sm">{entry.first_name}</td>
       <td className="px-4 py-2.5">
-        <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
+        <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
           {ROLE_LABELS[entry.role]}
         </span>
       </td>
@@ -176,7 +176,7 @@ function StaffRow({
       </td>
       <td className="px-4 py-2.5">
         {entry.sport_season ? (
-          <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', SEASON_BADGE[entry.sport_season])}>
+          <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', SEASON_BADGE[entry.sport_season])}>
             {SEASON_DISPLAY[entry.sport_season]}
           </span>
         ) : '—'}
@@ -545,7 +545,7 @@ function EditModal({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
                 {ROLE_LABELS[entry.role]}
               </span>
               {entry.sport_name && !isCoach && (
@@ -879,12 +879,6 @@ export default function Staff() {
               )} />
             </button>
           </label>
-          {creatableRoles.length > 0 && !showPast && (
-            <Button onClick={() => setInviteOpen(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Invite
-            </Button>
-          )}
         </div>
       </div>
 

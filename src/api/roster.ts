@@ -19,7 +19,6 @@ export interface MappedRow {
   role:          'student' | 'parent'
   first_name:    string
   last_name:     string
-  is_captain:    boolean
   dob?:          string
   jersey_number?: string
   grade?:        string

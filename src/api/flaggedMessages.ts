@@ -23,6 +23,7 @@ export interface QuestionableMessage {
   content:          string
   flag_category:    string | null
   flag_reason:      string | null
+  report_notes:     string | null
   moderation_score: number | null
   sender:           MessageSender
   sport:            MessageSport | null

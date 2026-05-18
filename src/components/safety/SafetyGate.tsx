@@ -117,6 +117,9 @@ function SafetyAuthForm({ userEmail }: { userEmail?: string }) {
             <p className="text-sm text-muted-foreground mt-1">
               This area requires additional verification. Your access will be logged.
             </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-md px-3 py-2">
+              <span className="font-semibold">Demo:</span> use password <span className="font-mono font-semibold">safety-dev</span>. In production, this gate requires two-factor authentication via email code.
+            </p>
           </div>
         </div>
 
@@ -126,7 +129,7 @@ function SafetyAuthForm({ userEmail }: { userEmail?: string }) {
             <div key={s} className="flex items-center gap-2">
               {i > 0 && <div className={cn('w-8 h-px', step === 'code' ? 'bg-primary' : 'bg-border')} />}
               <div className={cn(
-                'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors',
+                'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors',
                 step === s || (s === 'password' && step === 'code')
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'

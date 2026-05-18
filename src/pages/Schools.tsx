@@ -55,7 +55,7 @@ function PastSeasonDialog({ sport, onClose }: { sport: Sport; onClose: () => voi
                       <p className={cn('text-sm font-medium leading-none', m.graduated && 'italic')}>
                         {m.first_name} {m.last_name}
                         {m.graduated && (
-                          <span className="ml-2 text-[10px] font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
+                          <span className="ml-2 text-xs font-normal not-italic bg-muted text-muted-foreground px-1.5 py-0.5 rounded align-middle">
                             Graduated
                           </span>
                         )}
@@ -158,13 +158,13 @@ function SchoolPanel({ school, onClose }: { school: School; onClose: () => void 
     queryFn: () => fetchSports(),
   })
 
-  const schoolYears = allSports
-    ? [...new Set(allSports.map(s => s.school_year))].sort().reverse()
-    : []
+  const schoolSports = allSports?.filter(s => s.school_id === school.id) ?? []
+
+  const schoolYears = [...new Set(schoolSports.map(s => s.school_year))].sort().reverse()
   const currentYear = schoolYears[0] ?? ''
 
-  const currentSports = allSports?.filter(s => s.school_year === currentYear) ?? []
-  const pastSports = allSports?.filter(s => s.school_year !== currentYear) ?? []
+  const currentSports = schoolSports.filter(s => s.school_year === currentYear)
+  const pastSports    = schoolSports.filter(s => s.school_year !== currentYear)
 
   return (
     <Sheet open onOpenChange={v => { if (!v) onClose() }}>

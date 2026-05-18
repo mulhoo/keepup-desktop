@@ -100,13 +100,19 @@ function QuestionableCard({
           </p>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full', CATEGORY_COLOR[category] ?? CATEGORY_COLOR.unknown)}>
+            <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', CATEGORY_COLOR[category] ?? CATEGORY_COLOR.unknown)}>
               {CATEGORY_LABEL[category] ?? category}
             </span>
             <ScoreMeter score={message.moderation_score ?? 0} />
             <span className="text-xs text-muted-foreground"># {message.channel.name}</span>
           </div>
 
+          {message.report_notes && (
+            <div className="flex items-start gap-1.5 text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded px-3 py-2">
+              <MessageSquareWarning className="w-3.5 h-3.5 mt-0.5 flex-none text-amber-500" />
+              <span className="text-muted-foreground"><strong className="text-amber-700 dark:text-amber-400">User reported:</strong> {message.report_notes}</span>
+            </div>
+          )}
           {message.flag_reason && (
             <button
               onClick={() => setExpanded(v => !v)}
@@ -157,6 +163,7 @@ function ChallengeCard({
   onDeny:    (id: number) => void
   isPending: boolean
 }) {
+  const [flagExpanded, setFlagExpanded] = useState(false)
   return (
     <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-card overflow-hidden">
       {/* Challenge header */}
@@ -198,9 +205,25 @@ function ChallengeCard({
           {/* Student's reason */}
           {item.challenge_reason && (
             <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 space-y-0.5">
-              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Student's reason</p>
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Student's reason</p>
               <p className="text-xs text-foreground">"{item.challenge_reason}"</p>
             </div>
+          )}
+
+          {/* AI flag reason */}
+          {item.flag_reason && (
+            <button
+              onClick={() => setFlagExpanded(v => !v)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {flagExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {flagExpanded ? 'Hide' : 'Why was this flagged?'}
+            </button>
+          )}
+          {flagExpanded && item.flag_reason && (
+            <p className="text-xs text-muted-foreground bg-muted/30 rounded px-3 py-2">
+              {item.flag_reason}
+            </p>
           )}
         </div>
       </div>

@@ -5,33 +5,33 @@
 @layer base {
   /* ── Hajos light theme: white + navy ── */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 65% 14%;
+    --background: 212 30% 96%;
+    --foreground: 215 65% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 65% 14%;
+    --card-foreground: 215 65% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 65% 14%;
+    --popover-foreground: 215 65% 12%;
 
-    --primary: 215 62% 26%;
+    --primary: 215 62% 24%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 213 50% 93%;
-    --secondary-foreground: 215 62% 26%;
+    --secondary: 213 45% 90%;
+    --secondary-foreground: 215 62% 24%;
 
-    --muted: 212 40% 95%;
-    --muted-foreground: 215 28% 46%;
+    --muted: 212 35% 92%;
+    --muted-foreground: 215 30% 35%;
 
-    --accent: 189 95% 43%;
+    --accent: 189 95% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 32% 88%;
-    --input: 215 32% 88%;
-    --ring: 189 95% 43%;
+    --border: 215 28% 78%;
+    --input: 215 28% 78%;
+    --ring: 189 95% 38%;
 
     --radius: 0.5rem;
   }

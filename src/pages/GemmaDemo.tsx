@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Cpu, Server, ArrowRight, Send, RotateCcw,
   ShieldCheck, ShieldAlert, ShieldX, Smartphone, Sparkles,
-  X, CheckCircle, Clock, Archive, Bell,
+  X, CheckCircle, Clock, Archive, Bell, Flag, ThumbsUp, Zap, AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchDemoChannels, sendDemoMessage, moderateOnDevice, type DemoChannel, type DemoMessageResult } from '@/api/activities'
@@ -60,6 +60,7 @@ const PRESETS = [
   { label: 'Normal',       text: 'Good practice today everyone, great effort out there!' },
   { label: 'Questionable', text: "That was stupid, you should have just shut up already"  },
   { label: 'Severe',       text: "I hate you, you're going to regret this"                },
+  { label: 'Grooming',     text: "Meet me alone after practice, don't tell the other swimmers" },
 ]
 
 const TIER_CONFIG: Record<Tier, {
@@ -119,7 +120,7 @@ function ScoreBar({ score, tier, visible }: { score: number; tier: Tier; visible
           style={{ width: visible ? `${Math.round(score * 100)}%` : '0%' }}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground/50">
+      <div className="flex justify-between text-xs text-muted-foreground/50">
         <span>0.0 clear</span>
         <span>0.40 questionable</span>
         <span>0.75 severe</span>
@@ -136,16 +137,16 @@ function DataFlowArrow({ active, tier }: { active: boolean; tier: Tier | null })
         <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">To KeepUp server</p>
         <ArrowRight className={cn('w-6 h-6 transition-colors duration-300', active ? arrowColor : 'text-muted-foreground')} />
         <div className="text-center space-y-0.5">
-          <p className="text-[10px] font-mono text-muted-foreground">message</p>
-          <p className="text-[10px] font-mono text-muted-foreground">score</p>
-          <p className="text-[10px] font-mono text-muted-foreground">tier</p>
+          <p className="text-xs font-mono text-muted-foreground">message</p>
+          <p className="text-xs font-mono text-muted-foreground">score</p>
+          <p className="text-xs font-mono text-muted-foreground">tier</p>
         </div>
       </div>
       <div className="w-px h-4 bg-border/40" />
       <div className="flex flex-col items-center gap-1.5">
         <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Never sent to</p>
         <div className="relative">
-          <div className="px-2 py-1 rounded border border-border/40 bg-muted/30 text-[10px] text-muted-foreground/60 text-center font-medium">
+          <div className="px-2 py-1 rounded border border-border/40 bg-muted/30 text-xs text-muted-foreground/60 text-center font-medium">
             External AI API
             <br />
             <span className="text-[9px]">(OpenAI, Google, etc.)</span>
@@ -169,14 +170,14 @@ function ServerEventCard({ event }: { event: ServerEvent }) {
           <ServerIcon className={cn('w-3.5 h-3.5', color)} />
           <span className={cn('text-xs font-semibold', color)}>{serverLabel}</span>
         </div>
-        <span className="text-[10px] text-muted-foreground font-mono">{event.receivedAt}</span>
+        <span className="text-xs text-muted-foreground font-mono">{event.receivedAt}</span>
       </div>
 
       <div className="text-xs bg-muted/40 rounded px-2.5 py-2 border italic text-muted-foreground">
         "{event.message}"
       </div>
 
-      <div className="font-mono text-[10px] text-muted-foreground space-y-0.5">
+      <div className="font-mono text-xs text-muted-foreground space-y-0.5">
         <p><span className="text-foreground/60">score:</span>   {event.score.toFixed(3)}</p>
         <p><span className="text-foreground/60">tier:</span>    {event.tier}</p>
         <p><span className="text-foreground/60">action:</span>  {event.flagAction ?? 'delivered'}</p>
@@ -184,16 +185,148 @@ function ServerEventCard({ event }: { event: ServerEvent }) {
         <p><span className="text-foreground/60">channel:</span> {event.channel}</p>
       </div>
 
-      <p className="text-[10px] text-muted-foreground/60 leading-tight">{serverDesc}</p>
+      <p className="text-xs text-muted-foreground/60 leading-tight">{serverDesc}</p>
 
       {event.notified.length > 0 && (
         <div className="flex items-start gap-1.5 pt-0.5">
           <Bell className="w-3 h-3 text-primary flex-none mt-0.5" />
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Notified: {event.notified.map(n => `${n.name} (${n.role.replace('_', ' ')})`).join(', ')}
           </p>
         </div>
       )}
+    </div>
+  )
+}
+
+
+const CHAT_HISTORY = [
+  { self: false, text: "See you at practice!" },
+  { self: true,  text: "Can't wait, working on my flip turn 🏊" },
+]
+
+type RecipientAction = 'none' | 'dismissed' | 'reported'
+
+function RecipientView({ tier, message, visible }: { tier: Tier; message: string; visible: boolean }) {
+  const [action, setAction] = useState<RecipientAction>('none')
+
+  useEffect(() => { setAction('none') }, [tier, message])
+
+  return (
+    <div className={cn('border rounded-xl overflow-hidden transition-opacity duration-500', visible ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+      <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b">
+        <Smartphone className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm font-semibold">Recipient's Chat</span>
+        <span className="text-xs text-muted-foreground">— what the other student sees</span>
+      </div>
+
+      <div className="p-4 space-y-2 min-h-[140px]">
+        {/* Existing chat history for context */}
+        {CHAT_HISTORY.map((m, i) => (
+          <div key={i} className={cn('flex', m.self ? 'justify-end' : 'justify-start')}>
+            <div className={cn(
+              'max-w-[72%] px-3 py-2 rounded-2xl text-xs leading-relaxed',
+              m.self ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
+            )}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+
+        {/* Clear — delivered normally with a private report option */}
+        {tier === 'clear' && (
+          <div className="space-y-1">
+            <div className="flex justify-start items-end gap-1.5">
+              <div className="max-w-[72%] px-3 py-2 rounded-2xl text-xs leading-relaxed bg-muted text-foreground">
+                {message}
+              </div>
+            </div>
+            {action === 'none' && (
+              <button
+                onClick={() => setAction('reported')}
+                className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors pl-1"
+              >
+                <Flag className="w-2.5 h-2.5" />
+                Report privately
+              </button>
+            )}
+            {action === 'reported' && (
+              <p className="text-xs text-primary pl-1 flex items-center gap-1">
+                <CheckCircle className="w-2.5 h-2.5" />
+                Reported privately — your coach has been notified
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Questionable — message is visible but marked as under review */}
+        {tier === 'questionable' && (
+          <div className="space-y-2">
+            <div className="flex justify-start items-start gap-1.5">
+              <div className="max-w-[72%] px-3 py-2 rounded-2xl text-xs leading-relaxed bg-muted text-foreground relative">
+                {message}
+                {/* Review badge on the bubble */}
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
+                  <Clock className="w-2.5 h-2.5 text-white" />
+                </span>
+              </div>
+            </div>
+
+            {action === 'none' && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5 space-y-2">
+                <p className="text-xs text-amber-800 dark:text-amber-300 leading-snug">
+                  KeepUp flagged this message for review. Does it concern you?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAction('dismissed')}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-background border hover:bg-muted transition-colors text-foreground"
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                    Looks fine to me
+                  </button>
+                  <button
+                    onClick={() => setAction('reported')}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors text-red-700 dark:text-red-400"
+                  >
+                    <Flag className="w-3 h-3" />
+                    This concerns me
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {action === 'dismissed' && (
+              <p className="text-xs text-muted-foreground pl-1 flex items-center gap-1.5">
+                <CheckCircle className="w-3 h-3 text-green-500" />
+                Thanks — your feedback helps the system learn what's normal for your team
+              </p>
+            )}
+
+            {action === 'reported' && (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2.5">
+                <p className="text-xs text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                  <Flag className="w-3 h-3 flex-none" />
+                  Reported privately — your coach and athletic director have been notified
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Severe — blocked entirely, safety notice only */}
+        {tier === 'severe' && (
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 flex items-start gap-2.5">
+            <ShieldX className="w-4 h-4 text-red-500 flex-none mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-red-700 dark:text-red-400">Message blocked by KeepUp Safety</p>
+              <p className="text-xs text-muted-foreground leading-snug">
+                A message that violated KeepUp's safety policy was not delivered. Your coach and athletic director have been notified.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -208,6 +341,7 @@ export default function GemmaDemo() {
   const [phase,        setPhase]        = useState<Phase>('idle')
   const [localResult,  setLocalResult]  = useState<LocalResult | null>(null)
   const [serverEvents, setServerEvents] = useState<ServerEvent[]>([])
+  const [gemmaStatus,  setGemmaStatus]  = useState<'unknown' | 'gemma4' | 'fallback'>('unknown')
   const [channel,      setChannel]      = useState<DemoChannel | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -233,6 +367,7 @@ export default function GemmaDemo() {
                             .catch(() => fallbackScore(text)),
     ])
     setLocalResult(onDevice)
+    setGemmaStatus(onDevice.source === 'gemma4' ? 'gemma4' : 'fallback')
 
     setPhase('transmitting')
     await new Promise(r => setTimeout(r, 700))
@@ -282,6 +417,7 @@ export default function GemmaDemo() {
     setMessage('')
     setPhase('idle')
     setLocalResult(null)
+    setGemmaStatus('unknown')
   }
 
   const isAnalyzing    = phase === 'analyzing'
@@ -320,15 +456,28 @@ export default function GemmaDemo() {
           <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b">
             <Smartphone className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-semibold">Student's Device</span>
-            <div className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
-              <Sparkles className="w-3 h-3 text-primary" />
-              <span className="text-[10px] font-semibold text-primary">Gemma 4 E4B — on device</span>
+            <div className="ml-auto flex items-center gap-2">
+              {gemmaStatus !== 'unknown' && (
+                <div className={cn(
+                  'flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold',
+                  gemmaStatus === 'gemma4'
+                    ? 'bg-violet-500/10 border-violet-400/30 text-violet-600 dark:text-violet-400'
+                    : 'bg-amber-500/10 border-amber-400/30 text-amber-700 dark:text-amber-500'
+                )}>
+                  <span className={cn('w-1.5 h-1.5 rounded-full', gemmaStatus === 'gemma4' ? 'bg-violet-500' : 'bg-amber-500')} />
+                  {gemmaStatus === 'gemma4' ? 'Gemma live' : 'Fallback active'}
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span className="text-xs font-semibold text-primary">Gemma 4 E4B — on device</span>
+              </div>
             </div>
           </div>
 
           <div className="p-4 space-y-4">
             <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Try a scenario</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Try a scenario</p>
               <div className="flex gap-2 flex-wrap">
                 {PRESETS.map(p => (
                   <button
@@ -344,7 +493,7 @@ export default function GemmaDemo() {
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Message {channel && <span className="font-normal normal-case">→ #{channel.name} · {channel.sport}</span>}
               </p>
               <textarea
@@ -376,22 +525,27 @@ export default function GemmaDemo() {
               <ScoreBar score={localResult?.score ?? 0} tier={displayTier} visible={!!localResult} />
 
               {localResult && (
-                <div className={cn('rounded-lg border p-3 space-y-1.5', TIER_CONFIG[displayTier].bgBorder)}>
+                <div className={cn('rounded-lg border p-3 space-y-2', TIER_CONFIG[displayTier].bgBorder)}>
                   {(() => {
                     const { label, color, Icon, serverLabel, serverDesc } = TIER_CONFIG[displayTier]
+                    const isGemma = localResult.source === 'gemma4'
                     return (
                       <>
                         <div className="flex items-center gap-2">
                           <Icon className={cn('w-4 h-4', color)} />
                           <span className={cn('text-sm font-semibold', color)}>{label}</span>
-                          <span className={cn(
-                            'ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded',
-                            localResult.source === 'gemma4'
-                              ? 'bg-primary/10 text-primary border border-primary/20'
-                              : 'bg-muted text-muted-foreground border border-border'
-                          )}>
-                            {localResult.source === 'gemma4' ? 'Gemma 4' : 'keyword fallback'}
-                          </span>
+                        </div>
+                        {/* Source badge — prominent so it reads clearly in a demo */}
+                        <div className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-semibold w-fit',
+                          isGemma
+                            ? 'bg-violet-500/10 border-violet-400/30 text-violet-600 dark:text-violet-400'
+                            : 'bg-amber-500/10 border-amber-400/30 text-amber-700 dark:text-amber-400'
+                        )}>
+                          {isGemma
+                            ? <><Zap className="w-3 h-3" />Gemma 4 — on device</>
+                            : <><AlertTriangle className="w-3 h-3" />Keyword fallback — Gemma unavailable</>
+                          }
                         </div>
                         <p className={cn('text-xs font-medium', color)}>→ {serverLabel}</p>
                         <p className="text-xs text-muted-foreground">{serverDesc}</p>
@@ -416,9 +570,9 @@ export default function GemmaDemo() {
           <div className="p-4 space-y-4">
             {/* Live inbound payload */}
             <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Inbound payload</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Inbound payload</p>
               <div className={cn(
-                'font-mono text-[11px] rounded-lg border p-3 space-y-0.5 transition-all duration-300',
+                'font-mono text-xs rounded-lg border p-3 space-y-0.5 transition-all duration-300',
                 arrowActive && localResult ? 'bg-background border-border' : 'bg-muted/30 border-border/40 opacity-40'
               )}>
                 {localResult ? (
@@ -437,9 +591,9 @@ export default function GemmaDemo() {
             {/* Message log */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Message log</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Message log</p>
                 {serverEvents.some(e => e.notified.length > 0) && (
-                  <div className="flex items-center gap-1 text-[10px] text-primary">
+                  <div className="flex items-center gap-1 text-xs text-primary">
                     <Bell className="w-3 h-3" />
                     Notifications sent — check coach/AD profile
                   </div>
@@ -458,6 +612,9 @@ export default function GemmaDemo() {
           </div>
         </div>
       </div>
+
+      {/* Recipient's view */}
+      <RecipientView tier={displayTier} message={message} visible={isDone} />
 
       {/* Architecture note */}
       <div className="border rounded-lg p-4 bg-muted/20 space-y-1">

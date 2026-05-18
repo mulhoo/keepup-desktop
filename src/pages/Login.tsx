@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import wordingNavy from '@/assets/branding/keepup-wording-navy.png'
+import wordingWhite from '@/assets/branding/keepup-wording-white.png'
 import { Link, useSearchParams, useLocation } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import { Sun, Moon } from 'lucide-react'
@@ -88,8 +90,11 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-4 pt-7">
       <div className="w-full max-w-md space-y-6">
 
-        <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">KeepUp</h1>
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center">
+            <img src={wordingNavy} alt="KeepUp" className="h-14 dark:hidden" />
+            <img src={wordingWhite} alt="KeepUp" className="h-14 hidden dark:block" />
+          </div>
           <p className="text-sm text-muted-foreground">Communication student-athletes will actually use, with the protection schools need.</p>
         </div>
 

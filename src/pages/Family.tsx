@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Trophy, Loader2, Smartphone, Users, Plus, MessageSquare, ChevronRight, X } from 'lucide-react'
+import { Trophy, Loader2, Smartphone, Users, Plus, MessageSquare, ChevronRight, X, ArrowLeft } from 'lucide-react'
 import { fetchFamily, type Child, type ChildSport } from '@/api/family'
 import {
   fetchFamilyGroups, createFamilyGroup,
-  type FamilyGroup, type EligibleMember, type ParentSeason,
+  type FamilyGroup, type EligibleMember, type EligibleChild, type ParentSeason,
 } from '@/api/familyGroups'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -53,7 +53,7 @@ function SportCard({ sport }: { sport: ChildSport }) {
         <div className="space-y-1">
           {sport.coaches.map(coach => (
             <div key={coach.name} className="flex items-center gap-2 text-sm">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary flex-none">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-none">
                 {coach.name.split(' ').map(n => n[0]).join('')}
               </div>
               <span className="font-medium">{coach.name}</span>
@@ -72,7 +72,7 @@ function SportCard({ sport }: { sport: ChildSport }) {
             {sport.recent_announcements.map(a => (
               <div key={a.id} className="rounded-md bg-muted/50 px-3 py-2 space-y-0.5">
                 <p className="text-xs text-foreground leading-snug">{a.content}</p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {a.sender_name} · {timeAgo(a.sent_at)}
                 </p>
               </div>
@@ -135,6 +135,32 @@ function GroupCard({ group, onClick }: { group: FamilyGroup; onClick: () => void
   )
 }
 
+function ParentRow({ member, checked, onToggle }: { member: EligibleMember; checked: boolean; onToggle: () => void }) {
+  const initials    = member.name.split(' ').map(n => n[0]).join('').slice(0, 2)
+  const displayName = member.child_name ? `${member.name} (${member.child_name})` : member.name
+  return (
+    <label className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
+      <input type="checkbox" checked={checked} onChange={onToggle} className="rounded" />
+      <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex-none">
+        {initials}
+      </div>
+      <span className="text-sm flex-1">{displayName}</span>
+    </label>
+  )
+}
+
+function ChildRow({ child, checked, onToggle }: { child: EligibleChild; checked: boolean; onToggle: () => void }) {
+  return (
+    <label className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
+      <input type="checkbox" checked={checked} onChange={onToggle} className="rounded" />
+      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-none">
+        {child.first_name.slice(0, 1)}
+      </div>
+      <span className="text-sm flex-1">{child.first_name}</span>
+    </label>
+  )
+}
+
 function CreateGroupModal({
   parentSeasons,
   onClose,
@@ -144,54 +170,45 @@ function CreateGroupModal({
   onClose:       () => void
   onCreate:      (data: { name: string; season_id: number; member_ids: number[] }) => void
 }) {
-  const [name,       setName]      = useState('')
-  const [seasonId,   setSeasonId]  = useState<number | null>(parentSeasons[0]?.id ?? null)
-  const [selected,   setSelected]  = useState<Set<number>>(new Set())
+  const [step,             setStep]            = useState<1 | 2>(1)
+  const [name,             setName]            = useState('')
+  const [seasonId,         setSeasonId]        = useState<number | null>(parentSeasons[0]?.id ?? null)
+  const [selectedParents,  setSelectedParents] = useState<Set<number>>(new Set())
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
 
-  const season = parentSeasons.find(s => s.id === seasonId)
-  const eligible = season?.eligible_members ?? []
-  const parents  = eligible.filter(m => m.role === 'parent')
-  const students = eligible.filter(m => m.role === 'student')
+  const season     = parentSeasons.find(s => s.id === seasonId)
+  const eligible   = season?.eligible_members ?? []
+  const myChildren = season?.my_children ?? []
 
-  const toggle = (id: number) => {
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
-      return next
-    })
-  }
-
-  const validationError = useMemo((): string | null => {
-    if (!name.trim()) return 'Group name is required'
-    const selectedStudentIds = students.filter(m => selected.has(m.id)).map(m => m.id)
-    for (const s of selectedStudentIds) {
-      const student = eligible.find(m => m.id === s)
-      if (!student) continue
-      const hasParent = student.child_ids.length === 0
-        ? true
-        : parents.some(p => selected.has(p.id) && p.child_ids.includes(s))
-      if (!hasParent) {
-        const sName = student.name.split(' ')[0]
-        return `${sName} is selected but their parent isn't — add their parent too`
-      }
+  function advanceOrCreate() {
+    if (myChildren.length === 0) {
+      onCreate({ name: name.trim(), season_id: seasonId!, member_ids: [ ...selectedParents ] })
+      return
     }
-    return null
-  }, [name, selected, students, parents, eligible])
-
-  const error = (selected.size > 0 || name) ? validationError : null
-
-  const handleCreate = () => {
-    if (validationError) { toast.error(validationError); return }
-    onCreate({ name: name.trim(), season_id: seasonId!, member_ids: Array.from(selected) })
+    setSelectedStudents(new Set(myChildren.map(c => c.id)))
+    setStep(2)
   }
+
+  function handleCreate() {
+    onCreate({ name: name.trim(), season_id: seasonId!, member_ids: [ ...selectedParents, ...selectedStudents ] })
+  }
+
+  const canAdvance = name.trim().length > 0 && selectedParents.size > 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-card border rounded-xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <div className="flex items-center gap-2">
+            {step === 2 && (
+              <button onClick={() => setStep(1)} className="p-1 rounded-md hover:bg-muted transition-colors mr-1">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
             <Users className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold">New Family Group</h2>
+            <h2 className="text-sm font-semibold">
+              {step === 1 ? 'New Group — Step 1 of 2' : 'New Group — Step 2 of 2'}
+            </h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-md hover:bg-muted transition-colors">
             <X className="w-4 h-4 text-muted-foreground" />
@@ -199,63 +216,81 @@ function CreateGroupModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Group name</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Carpool Crew"
-              className="w-full bg-muted/50 border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/50"
-            />
-          </div>
+          {step === 1 && (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Group name</label>
+                <input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Carpool Crew"
+                  className="w-full bg-muted/50 border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+                />
+              </div>
 
-          {/* Season */}
-          {parentSeasons.length > 1 && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</label>
-              <select
-                value={seasonId ?? ''}
-                onChange={e => { setSeasonId(Number(e.target.value)); setSelected(new Set()) }}
-                className="w-full bg-muted/50 border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/50"
-              >
-                {parentSeasons.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
+              {parentSeasons.length > 1 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</label>
+                  <select
+                    value={seasonId ?? ''}
+                    onChange={e => { setSeasonId(Number(e.target.value)); setSelectedParents(new Set()) }}
+                    className="w-full bg-muted/50 border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+                  >
+                    {parentSeasons.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invite parents</label>
+                <p className="text-xs text-muted-foreground">
+                  Select the parents you'd like to include. Their children will be available to add in the next step.
+                </p>
+                {eligible.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-3 py-2">No other parents in this season.</p>
+                ) : (
+                  <div className="space-y-0.5 mt-1">
+                    {eligible.map(m => (
+                      <ParentRow
+                        key={m.id}
+                        member={m}
+                        checked={selectedParents.has(m.id)}
+                        onToggle={() => setSelectedParents(prev => {
+                          const next = new Set(prev)
+                          if (next.has(m.id)) next.delete(m.id); else next.add(m.id)
+                          return next
+                        })}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
-          {/* Members */}
-          {season && (
+          {step === 2 && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Add members</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Add your kids</label>
               <p className="text-xs text-muted-foreground">
-                Every student you add must have at least one of their parents in the group.
+                Select which of your children to include. The other parents will add their own kids on their end.
               </p>
-
-              {parents.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[11px] font-medium text-muted-foreground mt-2">Parents</p>
-                  {parents.map(m => (
-                    <MemberRow key={m.id} member={m} checked={selected.has(m.id)} onToggle={() => toggle(m.id)} />
-                  ))}
-                </div>
-              )}
-
-              {students.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[11px] font-medium text-muted-foreground mt-2">Students</p>
-                  {students.map(m => (
-                    <MemberRow key={m.id} member={m} checked={selected.has(m.id)} onToggle={() => toggle(m.id)} />
-                  ))}
-                </div>
-              )}
+              <div className="space-y-0.5 mt-1">
+                {myChildren.map(c => (
+                  <ChildRow
+                    key={c.id}
+                    child={c}
+                    checked={selectedStudents.has(c.id)}
+                    onToggle={() => setSelectedStudents(prev => {
+                      const next = new Set(prev)
+                      if (next.has(c.id)) next.delete(c.id); else next.add(c.id)
+                      return next
+                    })}
+                  />
+                ))}
+              </div>
             </div>
-          )}
-
-          {error && (
-            <p className="text-xs text-destructive">{error}</p>
           )}
         </div>
 
@@ -263,38 +298,26 @@ function CreateGroupModal({
           <button onClick={onClose} className="text-sm px-3 py-1.5 rounded-md border hover:bg-muted transition-colors">
             Cancel
           </button>
-          <button
-            onClick={handleCreate}
-            disabled={!!validationError}
-            className="text-sm px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-1.5"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            Create group
-          </button>
+          {step === 1 ? (
+            <button
+              onClick={advanceOrCreate}
+              disabled={!canAdvance}
+              className="text-sm px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
+            >
+              {myChildren.length > 0 ? 'Next — Add your kids' : 'Create group'}
+            </button>
+          ) : (
+            <button
+              onClick={handleCreate}
+              className="text-sm px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Create group
+            </button>
+          )}
         </div>
       </div>
     </div>
-  )
-}
-
-function MemberRow({ member, checked, onToggle }: { member: EligibleMember; checked: boolean; onToggle: () => void }) {
-  const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2)
-  return (
-    <label className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
-      <input type="checkbox" checked={checked} onChange={onToggle} className="rounded" />
-      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary flex-none">
-        {initials}
-      </div>
-      <span className="text-sm flex-1">{member.name}</span>
-      <span className={cn(
-        'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-        member.role === 'parent'
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-          : 'bg-primary/10 text-primary'
-      )}>
-        {member.role === 'parent' ? 'Parent' : 'Student'}
-      </span>
-    </label>
   )
 }
 

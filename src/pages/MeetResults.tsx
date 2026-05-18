@@ -91,13 +91,13 @@ function ResultCard({
               {schoolShort(result.away_school)}
             </span>
             {result.cross_division && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Cross-div</span>
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Cross-div</span>
             )}
-            <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded border', badge.className)}>
+            <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded border', badge.className)}>
               {badge.label}
             </span>
           </div>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{format(new Date(result.date), 'MMM d, yyyy')}</span>
             <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{result.venue}</span>
             {resultFlags.length > 0 && result.status === 'published' && (
@@ -174,13 +174,13 @@ function ResultCard({
               <div className="grid grid-cols-2 gap-2">
                 {result.events.map(ev => (
                   <div key={ev.event} className="border rounded-md p-2.5 space-y-1.5">
-                    <p className="text-[11px] font-medium text-muted-foreground">{ev.event}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{ev.event}</p>
                     {ev.results.map(r => (
                       <div key={r.athlete} className="flex items-center justify-between text-xs gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-muted-foreground/50 w-3 flex-none">{r.place}.</span>
                           <span className="truncate">{r.athlete}</span>
-                          <span className="text-[10px] text-muted-foreground/50 flex-none">{r.school}</span>
+                          <span className="text-xs text-muted-foreground/50 flex-none">{r.school}</span>
                           {r.personal_best && <span className="text-[9px] font-bold text-primary bg-primary/10 rounded px-1 flex-none">PR</span>}
                         </div>
                         <span className="font-mono text-xs text-muted-foreground flex-none">{r.time}</span>
@@ -192,7 +192,7 @@ function ResultCard({
             </div>
           )}
 
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Uploaded by {result.uploaded_by} · {format(new Date(result.uploaded_at), 'MMM d, yyyy h:mm a')}
           </p>
         </div>
@@ -250,7 +250,7 @@ function QualificationsTab({ readOnly }: { readOnly?: boolean }) {
               {(level === 'districts_wildcard' || level === 'kingco') && <Medal className="w-4 h-4 text-muted-foreground" />}
               <h3 className="text-sm font-semibold">{LEVEL_LABEL[level]}</h3>
               <span className={cn(
-                'text-[10px] font-medium px-1.5 py-0.5 rounded border',
+                'text-xs font-medium px-1.5 py-0.5 rounded border',
                 LEVEL_COLOR[level]
               )}>{levelFlags.length}</span>
             </div>
@@ -269,13 +269,13 @@ function QualificationsTab({ readOnly }: { readOnly?: boolean }) {
                       <span className="text-xs text-muted-foreground">·</span>
                       <span className="text-xs text-muted-foreground">{flag.event}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground font-mono">
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground font-mono">
                       <span className="font-semibold text-foreground">{flag.time}</span>
                       <span>vs std {flag.standard_time}</span>
                     </div>
                   </div>
                   {readOnly ? (
-                    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded border flex-none', LEVEL_COLOR[flag.level])}>
+                    <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded border flex-none', LEVEL_COLOR[flag.level])}>
                       {LEVEL_LABEL[flag.level]}
                     </span>
                   ) : (
@@ -306,7 +306,7 @@ function QualificationsTab({ readOnly }: { readOnly?: boolean }) {
               <div key={flag.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/20 text-muted-foreground">
                 <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-none" />
                 <span className="text-xs flex-1">{flag.athlete} · {flag.event} · <span className="font-mono">{flag.time}</span></span>
-                <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded border', LEVEL_COLOR[flag.level])}>
+                <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded border', LEVEL_COLOR[flag.level])}>
                   {LEVEL_LABEL[flag.level]}
                 </span>
               </div>
@@ -526,7 +526,7 @@ export default function MeetResults() {
           >
             {t.label}
             {t.badge != null && t.badge > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground min-w-[18px] text-center">
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground min-w-[18px] text-center">
                 {t.badge}
               </span>
             )}
@@ -542,7 +542,7 @@ export default function MeetResults() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium">Season Insights</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">AI</span>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">AI</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{SEASON_AI_INSIGHTS}</p>
             </div>

@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Megaphone, Send, CheckCircle2 } from 'lucide-react'
+import { Megaphone, Send, CheckCircle2, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchSports, sportDisplayName } from '@/api/sports'
 import {
   fetchAnnouncements,
   sendAnnouncement,
   type Announcement,
+  type AnnouncementSport,
   type SendAnnouncementParams,
 } from '@/api/announcements'
 import { cn } from '@/lib/utils'
@@ -42,15 +44,15 @@ function SportCheckbox({ checked, label, onClick }: { checked: boolean; label: s
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 text-left text-xs px-3 py-2 rounded-lg border transition-colors w-full',
+        'flex items-center gap-2 text-left text-xs px-2 py-1 rounded-lg border transition-colors w-full',
         checked
-          ? 'bg-primary/10 border-primary/40 text-foreground'
-          : 'bg-background hover:bg-muted border-border text-muted-foreground',
+          ? 'bg-primary/15 border-primary/50 text-foreground'
+          : 'bg-card hover:bg-secondary border-border text-muted-foreground hover:text-foreground',
       )}
     >
       <div className={cn(
         'w-4 h-4 rounded border flex items-center justify-center flex-none transition-colors',
-        checked ? 'bg-primary border-primary' : 'border-muted-foreground/40',
+        checked ? 'bg-primary border-primary' : 'border-border',
       )}>
         {checked && <Checkmark />}
       </div>
@@ -59,28 +61,57 @@ function SportCheckbox({ checked, label, onClick }: { checked: boolean; label: s
   )
 }
 
-function genderBadge(gender: string) {
-  if (gender === 'boys')  return <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">Boys</span>
-  if (gender === 'girls') return <span className="text-[10px] font-medium text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded">Girls</span>
-  return null
+function SportPill({ sport }: { sport: AnnouncementSport }) {
+  return (
+    <span className={cn(
+      'text-xs font-medium px-1.5 py-0.5 rounded',
+      sport.gender === 'girls' ? 'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/50' :
+      sport.gender === 'boys'  ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/50' :
+                                 'text-muted-foreground bg-muted',
+    )}>
+      {sport.name}
+    </span>
+  )
+}
+
+const MAX_PILLS = 5
+
+function seasonLabel(sports: Announcement['sports']): string | null {
+  if (sports.length < 2) return null
+  const seasons = [...new Set(sports.map(s => s.athletic_season))]
+  if (seasons.length !== 1 || !seasons[0]) return null
+  return `${seasons[0].charAt(0).toUpperCase() + seasons[0].slice(1)} Sports`
 }
 
 function AnnouncementRow({ item, showSchool }: { item: Announcement; showSchool: boolean }) {
+  const grouped = seasonLabel(item.sports)
+  const visible  = item.sports.slice(0, MAX_PILLS)
+  const overflow = item.sports.length - MAX_PILLS
   return (
     <div className="px-5 py-4 flex gap-4">
       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-none mt-0.5">
         <Megaphone className="w-4 h-4 text-primary" />
       </div>
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          {genderBadge(item.gender)}
-          <span className="text-xs font-semibold">{item.sport_name}</span>
-          {showSchool && (
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {grouped ? (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              {grouped}
+            </span>
+          ) : (
+            <>
+              {visible.map(s => <SportPill key={s.id} sport={s} />)}
+              {overflow > 0 && (
+                <span className="text-xs text-muted-foreground">+{overflow} more</span>
+              )}
+            </>
+          )}
+          {showSchool && item.school_name && (
             <span className="text-xs text-muted-foreground">· {item.school_name}</span>
           )}
         </div>
         <p className="text-sm leading-snug">{item.content}</p>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {item.sender.name} · {timeAgo(item.created_at)}
         </p>
       </div>
@@ -101,11 +132,12 @@ export default function Announcements() {
     staleTime: 5 * 60_000,
   })
 
-  const { data: announcements = [], isLoading: loadingFeed } = useQuery({
-    queryKey:        ['announcements'],
+  const { data: announcementsData, isLoading: loadingFeed } = useQuery({
+    queryKey:        ['announcements', 'all'],
     queryFn:         fetchAnnouncements,
     refetchInterval: 60_000,
   })
+  const announcements = announcementsData?.sent ?? []
 
   const pickerSports = useMemo(() => {
     if (!isCoach || !user?.id) return sports
@@ -118,6 +150,9 @@ export default function Announcements() {
     sports.forEach(s => map.set(s.school_id, { id: s.school_id, name: s.school_name }))
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [sports, isDistrictLevel])
+
+  const [showAllSports,   setShowAllSports]   = useState(false)
+  const [showAllSchools,  setShowAllSchools]  = useState(false)
 
   // Empty Set = "All Sports" mode (no sport_ids filter sent to backend)
   const [selectedSportIds,     setSelectedSportIds]     = useState<Set<number>>(new Set())
@@ -162,17 +197,17 @@ export default function Announcements() {
   }
 
   const [content,    setContent]    = useState('')
-  const [sentResult, setSentResult] = useState<{ sports: string[] } | null>(null)
+  const [sentResult, setSentResult] = useState<{ label: string } | null>(null)
 
   const { mutate: doSend, isPending: sending } = useMutation({
     mutationFn: sendAnnouncement,
     onSuccess: (result) => {
-      setSentResult({ sports: result.sports })
+      setSentResult({ label: result.label })
       setContent('')
       setSelectedSportIds(new Set())
       setSelectedSchoolIds(new Set())
       setAthleticSeasonFilter(null)
-      qc.invalidateQueries({ queryKey: ['announcements'] })
+      qc.invalidateQueries({ queryKey: ['announcements'] })  // invalidates both team + all queries
       setTimeout(() => setSentResult(null), 6000)
     },
   })
@@ -204,59 +239,95 @@ export default function Announcements() {
     : `${selectedSportIds.size} sport${selectedSportIds.size > 1 ? 's' : ''}`
 
   return (
-    <div className="px-10 py-8 max-w-3xl space-y-8">
-      <div>
+    <div className="px-10 py-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold">Announcements</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Post to one or more teams' announcement channels.
         </p>
       </div>
 
+      <div className="grid grid-cols-[3fr_2fr] gap-6 items-start">
+
+      {/* Composer */}
       <div className="rounded-xl border bg-card divide-y">
 
         {/* Targeting */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-3 py-4 space-y-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Send to</p>
 
-          {/* School filter — district admin only */}
           {isDistrictLevel && schools.length > 1 && (
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Schools</p>
-              <div className="flex flex-wrap gap-2">
-                {schools.map(sch => {
-                  const active = selectedSchoolIds.has(sch.id)
-                  return (
-                    <button
-                      key={sch.id}
-                      onClick={() => toggleSchool(sch.id)}
-                      className={cn(
-                        'text-xs px-3 py-1 rounded-full border transition-colors',
-                        active
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-background hover:bg-muted border-border',
-                      )}
-                    >
-                      {sch.name}
-                    </button>
-                  )
-                })}
+              <div className="space-y-0.5">
+                <div className="grid grid-cols-3 gap-0.5">
+                  {/* All schools — first cell */}
+                  <button
+                    onClick={() => { setSelectedSchoolIds(new Set()); setSelectedSportIds(new Set()) }}
+                    className={cn(
+                      'flex items-center gap-2 text-left text-xs px-2 py-1 rounded-lg border transition-colors w-full',
+                      selectedSchoolIds.size === 0
+                        ? 'bg-primary/15 border-primary/50 text-foreground'
+                        : 'bg-card hover:bg-secondary border-border text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <div className={cn(
+                      'w-4 h-4 rounded border flex items-center justify-center flex-none transition-colors',
+                      selectedSchoolIds.size === 0 ? 'bg-primary border-primary' : 'border-muted-foreground/40',
+                    )}>
+                      {selectedSchoolIds.size === 0 && <Checkmark />}
+                    </div>
+                    <span className="truncate">All schools</span>
+                  </button>
+
+                  {/* Individual schools */}
+                  {(showAllSchools ? schools : schools.slice(0, 5)).map(sch => {
+                    const active = selectedSchoolIds.has(sch.id)
+                    return (
+                      <button
+                        key={sch.id}
+                        onClick={() => toggleSchool(sch.id)}
+                        className={cn(
+                          'flex items-center gap-2 text-left text-xs px-2 py-1 rounded-lg border transition-colors w-full',
+                          active
+                            ? 'bg-primary/15 border-primary/50 text-foreground'
+                            : 'bg-card hover:bg-secondary border-border text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        <div className={cn(
+                          'w-4 h-4 rounded border flex items-center justify-center flex-none transition-colors',
+                          active ? 'bg-primary border-primary' : 'border-muted-foreground/40',
+                        )}>
+                          {active && <Checkmark />}
+                        </div>
+                        <span className="truncate">{sch.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {schools.length > 5 && (
+                  <button
+                    onClick={() => setShowAllSchools(v => !v)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showAllSchools
+                      ? <><ChevronUp className="w-3 h-3" />Show less</>
+                      : <><ChevronDown className="w-3 h-3" />{schools.length - 5} more schools</>
+                    }
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* Athletic season filter — non-coaches only */}
           {!isCoach && (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">Filter by season</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setAthleticSeasonFilter(null)}
-                  className={cn(
-                    'text-xs px-3 py-1 rounded-full border transition-colors',
-                    !athleticSeasonFilter
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background hover:bg-muted border-border',
-                  )}
+                  className={cn('text-xs px-3 py-1 rounded-full border transition-colors', !athleticSeasonFilter ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-secondary border-border text-muted-foreground hover:text-foreground')}
                 >
                   All seasons
                 </button>
@@ -264,12 +335,7 @@ export default function Announcements() {
                   <button
                     key={value}
                     onClick={() => setAthleticSeasonFilter(v => v === value ? null : value)}
-                    className={cn(
-                      'text-xs px-3 py-1 rounded-full border transition-colors',
-                      athleticSeasonFilter === value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background hover:bg-muted border-border',
-                    )}
+                    className={cn('text-xs px-3 py-1 rounded-full border transition-colors', athleticSeasonFilter === value ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-secondary border-border text-muted-foreground hover:text-foreground')}
                   >
                     {label}
                   </button>
@@ -278,26 +344,21 @@ export default function Announcements() {
             </div>
           )}
 
-          {/* Sport picker */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <p className="text-xs text-muted-foreground">Sports</p>
-
             {visibleSports.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">No sports available.</p>
             ) : (
-              <div className="space-y-1">
-                {/* "All" row — only for non-coaches with multiple sports */}
-                {!isCoach && visibleSports.length > 1 && (
-                  <SportCheckbox
-                    checked={allMode}
-                    label={athleticSeasonFilter ? `All ${athleticSeasonFilter} sports` : 'All sports'}
-                    onClick={selectAll}
-                  />
-                )}
-
-                {/* Individual sport rows */}
-                <div className="grid grid-cols-2 gap-1 pt-0.5">
-                  {visibleSports.map(sp => (
+              <div className="space-y-0.5">
+                <div className="grid grid-cols-3 gap-0.5">
+                  {!isCoach && visibleSports.length > 1 && (
+                    <SportCheckbox
+                      checked={allMode}
+                      label={athleticSeasonFilter ? `All ${athleticSeasonFilter}` : 'All sports'}
+                      onClick={selectAll}
+                    />
+                  )}
+                  {(showAllSports ? visibleSports : visibleSports.slice(0, isCoach ? 6 : 5)).map(sp => (
                     <SportCheckbox
                       key={sp.id}
                       checked={!allMode && selectedSportIds.has(sp.id)}
@@ -306,6 +367,17 @@ export default function Announcements() {
                     />
                   ))}
                 </div>
+                {visibleSports.length > (isCoach ? 6 : 5) && (
+                  <button
+                    onClick={() => setShowAllSports(v => !v)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showAllSports
+                      ? <><ChevronUp className="w-3 h-3" />Show less</>
+                      : <><ChevronDown className="w-3 h-3" />{visibleSports.length - (isCoach ? 6 : 5)} more sports</>
+                    }
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -321,6 +393,11 @@ export default function Announcements() {
             rows={4}
             className="w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
+
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="w-3 h-3 text-violet-500 flex-none" />
+            <span>Content moderated by Gemma 4</span>
+          </div>
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
@@ -344,30 +421,57 @@ export default function Announcements() {
 
         {/* Success banner */}
         {sentResult && (
-          <div className="px-5 py-3 bg-emerald-50 flex items-start gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-none mt-0.5" />
-            <p className="text-xs text-emerald-800">
-              Sent to <span className="font-semibold">{sentResult.sports.join(', ')}</span>
+          <div className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/40 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-none mt-0.5" />
+            <p className="text-xs text-emerald-800 dark:text-emerald-300">
+              Sent to <span className="font-semibold">{sentResult.label}</span>
             </p>
           </div>
         )}
       </div>
 
-      <div>
-        <h2 className="text-sm font-semibold mb-3">Recent Announcements</h2>
-        <div className="rounded-xl border bg-card divide-y">
+      {/* Recent announcements — sidebar */}
+      <div className="sticky top-6">
+        <div className="rounded-xl bg-card border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</h2>
+            {announcements.length > 0 && (
+              <Link to="all" className="text-xs text-primary hover:underline">View all →</Link>
+            )}
+          </div>
+
           {loadingFeed ? (
-            <div className="px-5 py-8 text-sm text-muted-foreground text-center">Loading…</div>
+            <p className="text-xs text-muted-foreground py-4 text-center">Loading…</p>
           ) : announcements.length === 0 ? (
-            <div className="px-5 py-8 text-sm text-muted-foreground text-center">
-              No announcements yet.
-            </div>
+            <p className="text-xs text-muted-foreground py-4 text-center">Nothing sent yet.</p>
           ) : (
-            announcements.map(a => (
-              <AnnouncementRow key={a.id} item={a} showSchool={showSchool} />
-            ))
+            <div className="space-y-2">
+              {announcements.slice(0, 5).map(a => {
+                const grouped  = seasonLabel(a.sports)
+                const visible  = a.sports.slice(0, 2)
+                const overflow = a.sports.length - 2
+                return (
+                  <div key={a.id} className="rounded-lg bg-muted/50 px-3 py-2.5 space-y-1.5">
+                    <div className="flex gap-1 flex-wrap">
+                      {grouped ? (
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{grouped}</span>
+                      ) : (
+                        <>
+                          {visible.map(s => <SportPill key={s.id} sport={s} />)}
+                          {overflow > 0 && <span className="text-xs text-muted-foreground">+{overflow}</span>}
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs leading-snug line-clamp-2">{a.content}</p>
+                    <p className="text-xs text-muted-foreground">{a.sender.name} · {timeAgo(a.created_at)}</p>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
+      </div>
+
       </div>
     </div>
   )

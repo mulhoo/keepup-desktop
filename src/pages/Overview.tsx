@@ -1,11 +1,7 @@
 import { useAuth } from '@/hooks/useAuth'
-import { CommissionerOverview } from '@/components/overview/CommissionerOverview'
 
 export default function Overview() {
-  const { user, effectiveRole } = useAuth()
-  const isCommissioner = effectiveRole === 'sports_commissioner'
-
-  if (isCommissioner) return <CommissionerOverview />
+  const { user } = useAuth()
 
   return (
     <div className="px-10 py-8 max-w-4xl space-y-8">

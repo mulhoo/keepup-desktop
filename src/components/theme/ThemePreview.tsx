@@ -32,13 +32,13 @@ export default function ThemePreview({ colors }: Props) {
           <div className="flex items-center justify-between">
             <span className="font-semibold" style={{ color: c.color_text_primary }}>Varsity Swimming</span>
             <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              className="text-xs px-2 py-0.5 rounded-full font-medium"
               style={{ background: c.color_accent, color: c.color_text_on_accent }}
             >
               Live
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: c.color_text_secondary }}>
+          <p className="text-xs leading-relaxed" style={{ color: c.color_text_secondary }}>
             Practice today at 4:30pm — bring race suit for time trials.
           </p>
         </div>
@@ -48,8 +48,8 @@ export default function ThemePreview({ colors }: Props) {
           className="rounded-lg p-3 space-y-1"
           style={{ background: c.color_surface_variant, border: `1px solid ${c.color_border}` }}
         >
-          <span className="font-medium text-[11px]" style={{ color: c.color_text_primary }}>Coach Anderson</span>
-          <p className="text-[11px]" style={{ color: c.color_text_secondary }}>
+          <span className="font-medium text-xs" style={{ color: c.color_text_primary }}>Coach Anderson</span>
+          <p className="text-xs" style={{ color: c.color_text_secondary }}>
             Meet results are posted — great work everyone.
           </p>
         </div>
@@ -60,33 +60,33 @@ export default function ThemePreview({ colors }: Props) {
           style={{ background: c.color_surface, border: `1px solid ${c.color_border}` }}
         >
           <div
-            className="w-7 h-7 rounded-full flex-none flex items-center justify-center text-[10px] font-bold"
+            className="w-7 h-7 rounded-full flex-none flex items-center justify-center text-xs font-bold"
             style={{ background: c.color_primary, color: c.color_text_on_primary }}
           >
             JD
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-[11px] truncate" style={{ color: c.color_text_primary }}>Jamie D.</p>
-            <p className="text-[10px] truncate" style={{ color: c.color_text_secondary }}>Are you going to the meet Friday?</p>
+            <p className="font-medium text-xs truncate" style={{ color: c.color_text_primary }}>Jamie D.</p>
+            <p className="text-xs truncate" style={{ color: c.color_text_secondary }}>Are you going to the meet Friday?</p>
           </div>
         </div>
 
         {/* Tag chips */}
         <div className="flex gap-1.5 flex-wrap pt-1">
           <span
-            className="text-[10px] px-2.5 py-1 rounded-full font-medium"
+            className="text-xs px-2.5 py-1 rounded-full font-medium"
             style={{ background: c.color_primary, color: c.color_text_on_primary }}
           >
             Swimming
           </span>
           <span
-            className="text-[10px] px-2.5 py-1 rounded-full font-medium"
+            className="text-xs px-2.5 py-1 rounded-full font-medium"
             style={{ background: c.color_accent, color: c.color_text_on_accent }}
           >
             Meet Day
           </span>
           <span
-            className="text-[10px] px-2.5 py-1 rounded-full"
+            className="text-xs px-2.5 py-1 rounded-full"
             style={{ background: c.color_surface_variant, color: c.color_text_secondary, border: `1px solid ${c.color_border}` }}
           >
             Varsity
@@ -102,7 +102,7 @@ export default function ThemePreview({ colors }: Props) {
         {['Channels', 'DMs', 'Alerts'].map((tab, i) => (
           <span
             key={tab}
-            className="text-[10px] font-medium"
+            className="text-xs font-medium"
             style={{ color: i === 0 ? c.color_primary : c.color_text_secondary }}
           >
             {tab}

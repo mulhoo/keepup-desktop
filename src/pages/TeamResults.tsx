@@ -80,13 +80,13 @@ function ResultCard({
               {schoolShort(result.away_school)}
             </span>
             {result.cross_division && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Cross-div</span>
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Cross-div</span>
             )}
-            <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded border', badge.cls)}>
+            <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded border', badge.cls)}>
               {badge.label}
             </span>
           </div>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {format(new Date(result.date), 'MMM d, yyyy')}
@@ -197,13 +197,13 @@ function ResultCard({
               <div className="grid grid-cols-2 gap-2">
                 {result.events.map(ev => (
                   <div key={ev.event} className="border rounded-md p-2.5 space-y-1.5">
-                    <p className="text-[11px] font-medium text-muted-foreground">{ev.event}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{ev.event}</p>
                     {ev.results.map(r => (
                       <div key={r.athlete} className="flex items-center justify-between text-xs gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-muted-foreground/50 w-3 flex-none">{r.place}.</span>
                           <span className="truncate">{r.athlete}</span>
-                          <span className="text-[10px] text-muted-foreground/50 flex-none">{r.school}</span>
+                          <span className="text-xs text-muted-foreground/50 flex-none">{r.school}</span>
                           {r.personal_best && (
                             <span className="text-[9px] font-bold text-primary bg-primary/10 rounded px-1 flex-none">PR</span>
                           )}
@@ -217,7 +217,7 @@ function ResultCard({
             </div>
           )}
 
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Uploaded by {result.uploaded_by} · {format(new Date(result.uploaded_at), 'MMM d, yyyy h:mm a')}
           </p>
         </div>
@@ -394,7 +394,7 @@ function UploadDialog({
                     <p className="text-sm font-medium">Drop your Meet Manager PDF here</p>
                     <p className="text-xs text-muted-foreground">or click to browse · accepts .pdf</p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground/60 mt-1">
+                  <p className="text-xs text-muted-foreground/60 mt-1">
                     Reads team names and final score from the Meet Manager score sheet
                   </p>
                   <input
@@ -455,7 +455,7 @@ function UploadDialog({
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Score sheet read — teams and final score auto-filled below.
                     Add any individual highlights from your own notes before generating the summary.
                   </p>
@@ -495,14 +495,14 @@ function UploadDialog({
                 </label>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 space-y-1">
-                    <p className="text-[11px] text-muted-foreground truncate">{schoolShort(sport.school_name)} (home)</p>
+                    <p className="text-xs text-muted-foreground truncate">{schoolShort(sport.school_name)} (home)</p>
                     <input type="number" value={homeScore} onChange={e => setHomeScore(e.target.value)}
                       placeholder="0"
                       className="w-full h-10 px-3 text-center text-lg font-mono font-bold border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
                   </div>
                   <span className="text-muted-foreground/50 text-lg mt-5">–</span>
                   <div className="flex-1 space-y-1">
-                    <p className="text-[11px] text-muted-foreground truncate">{opponent || 'Opponent'} (away)</p>
+                    <p className="text-xs text-muted-foreground truncate">{opponent || 'Opponent'} (away)</p>
                     <input type="number" value={awayScore} onChange={e => setAwayScore(e.target.value)}
                       placeholder="0"
                       className="w-full h-10 px-3 text-center text-lg font-mono font-bold border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />

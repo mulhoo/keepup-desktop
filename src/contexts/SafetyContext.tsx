@@ -3,9 +3,19 @@ import { endSafetySession } from '@/api/safety'
 
 const INACTIVITY_MS = 5 * 60 * 1000 // 5 minutes
 
+export type AdminActionType =
+  | 'alert_viewed'
+  | 'parents_notified'
+  | 'ad_notified'
+  | 'district_notified'
+  | 'view_request_approved'
+  | 'view_request_denied'
+  | 'data_destruction_requested'
+  | 'message_deleted_everywhere'
+
 export interface SafetyAuditEvent {
   id:          string
-  type:        'session_start' | 'session_end' | 'chat_search'
+  type:        'session_start' | 'session_end' | 'chat_search' | AdminActionType
   occurred_at: string
   notes?:      string
   reason?:     'manual' | 'inactivity'
@@ -18,6 +28,7 @@ interface SafetyContextType {
   enterSafetySession:    () => void
   exitSafetySession:     (reason: 'manual' | 'inactivity') => void
   logChatSearch:         (notes: string) => void
+  logAdminAction:        (type: AdminActionType, notes: string) => void
   resetInactivity:       () => void
 }
 
@@ -70,6 +81,10 @@ export function SafetyProvider({ children }: { children: ReactNode }) {
     addEvent({ type: 'chat_search', occurred_at: new Date().toISOString(), notes })
   }, [addEvent])
 
+  const logAdminAction = useCallback((type: AdminActionType, notes: string) => {
+    addEvent({ type, occurred_at: new Date().toISOString(), notes })
+  }, [addEvent])
+
   useEffect(() => {
     if (isSafetyAuthenticated) {
       resetInactivity()
@@ -87,6 +102,7 @@ export function SafetyProvider({ children }: { children: ReactNode }) {
       enterSafetySession,
       exitSafetySession,
       logChatSearch,
+      logAdminAction,
       resetInactivity,
     }}>
       {children}
