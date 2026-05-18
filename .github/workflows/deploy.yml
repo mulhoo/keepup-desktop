@@ -29,6 +29,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_API_URL: https://api-dev-keepup.hajos.app
+          VITE_DEMO_MODE: "true"
         run: npm run build -- --mode ${{ steps.env.outputs.vite_mode }}
 
       - name: Configure AWS credentials
