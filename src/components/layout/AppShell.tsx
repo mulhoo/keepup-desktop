@@ -121,7 +121,7 @@ const NAV_CONFIG: NavItem[] = [
   { to: '/dashboard/schools',         key: 'nav.schools',        icon: MenuSchools,       min: 'district_admin'    },
   { to: '/dashboard/staff',           key: 'nav.staff',          icon: MenuStaff,         min: 'athletic_director' },
   { to: '/dashboard/parent-requests', key: 'nav.parentRequests', icon: MenuRequests,      roles: ['athletic_director', 'school_admin', 'district_admin', 'super_admin'] },
-  { to: '/dashboard/gemma-demo',      key: 'nav.gemmaDemo',      icon: MenuDemo,          roles: ['head_coach', 'assistant_coach'] },
+  { to: '/dashboard/gemma-demo',      key: 'nav.gemmaDemo',      icon: MenuDemo,          roles: ['head_coach', 'assistant_coach', 'student', 'student_captain', 'parent', 'athletic_director', 'school_admin'] },
   { to: '/dashboard/settings',        key: 'nav.settings',       icon: SettingsIcon,      min: 'assistant_coach'   },
 ]
 

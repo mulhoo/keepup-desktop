@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { getCurrentUser } from '@/api/auth'
 import type { SessionUser } from '@/api/auth'
-import { DEMO_MODE, getDemoToken } from '@/api/client'
+import { DEMO_MODE, getDemoToken, getDemoRole } from '@/api/client'
 
 interface AuthState {
   user: SessionUser | null
@@ -27,8 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ user: null, demoRole: null, isLoading: false })
       return
     }
+    const savedRole = DEMO_MODE ? getDemoRole() : null
     getCurrentUser()
-      .then(({ user }) => setState({ user, demoRole: null, isLoading: false }))
+      .then(({ user }) => setState({ user, demoRole: savedRole, isLoading: false }))
       .catch(() => setState({ user: null, demoRole: null, isLoading: false }))
   }, [])
 

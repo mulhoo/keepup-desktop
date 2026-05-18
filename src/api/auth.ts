@@ -1,4 +1,4 @@
-import { api, setDemoToken, clearDemoToken } from './client'
+import { api, setDemoToken, clearDemoToken, setDemoRole, clearDemoRole, DEMO_MODE, getDemoRole } from './client'
 
 export interface SessionUser {
   id: number
@@ -36,6 +36,7 @@ export async function loginWithPassword(email: string, password: string): Promis
 export async function loginAsDemo(role: DemoRole): Promise<LoginResponse> {
   const res = await api.post<LoginResponse>('/demo/session', { role })
   if (res.token) setDemoToken(res.token)
+  setDemoRole(role)
   return res
 }
 
@@ -50,10 +51,15 @@ export async function resetDemoData(): Promise<void> {
 export async function resetDemo(): Promise<void> {
   await resetDemoData()
   clearDemoToken()
+  clearDemoRole()
   await api.delete('/demo/session').catch(() => {})
 }
 
 export async function getCurrentUser(): Promise<{ user: SessionUser }> {
+  if (DEMO_MODE) {
+    const data = await api.get<SessionUser>('/demo/me')
+    return { user: { ...data, managing_role: getDemoRole() } }
+  }
   return api.get<{ user: SessionUser }>('/auth/session')
 }
 

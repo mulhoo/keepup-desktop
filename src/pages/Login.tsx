@@ -61,7 +61,7 @@ export default function Login() {
     try {
       const res = await loginAsDemo(role)
       login(res.user, role)
-      navigate('/dashboard')
+      navigate('/dashboard/gemma-demo')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Demo login failed')
     } finally {

@@ -3,9 +3,10 @@ import { api, DEMO_MODE } from './client'
 const base = DEMO_MODE ? '/demo/safety' : '/admin/safety'
 
 export interface SafetyRequestCodeResponse {
-  sent:       boolean
-  email?:     string
-  dev_bypass?: boolean
+  sent:          boolean
+  email?:        string
+  dev_bypass?:   boolean
+  safety_token?: string
 }
 
 export interface SafetyVerifyResponse {

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { requestSafetyCode, verifySafetyCode } from '@/api/safety'
+import { setSafetyToken } from '@/api/client'
 import { useSafety } from '@/contexts/SafetyContext'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -77,6 +78,7 @@ function SafetyAuthForm({ userEmail }: { userEmail?: string }) {
     try {
       const res = await requestSafetyCode(password)
       if (res.dev_bypass) {
+        if (res.safety_token) setSafetyToken(res.safety_token)
         enterSafetySession()
         return
       }

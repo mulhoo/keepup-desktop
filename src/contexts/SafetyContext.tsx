@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
 import { endSafetySession } from '@/api/safety'
+import { clearSafetyToken } from '@/api/client'
 
 const INACTIVITY_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -54,6 +55,7 @@ export function SafetyProvider({ children }: { children: ReactNode }) {
 
   const exitSafetySession = useCallback((reason: 'manual' | 'inactivity') => {
     clearInactivityTimer()
+    clearSafetyToken()
     setIsSafetyAuthenticated(false)
     setSessionStartedAt(null)
 
