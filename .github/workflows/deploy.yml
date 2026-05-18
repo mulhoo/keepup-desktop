@@ -2,12 +2,12 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [main, staging, dev]
+    branches: [demo, staging]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'desktop-demo' || github.ref_name }}
+    environment: ${{ github.ref_name == 'demo' && 'desktop-demo' || github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -16,7 +16,7 @@ jobs:
       - name: Set environment name
         id: env
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.ref_name }}" = "demo" ]; then
             echo "name=desktop-demo" >> $GITHUB_OUTPUT
             echo "vite_mode=staging" >> $GITHUB_OUTPUT
           else
