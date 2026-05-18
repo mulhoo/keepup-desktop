@@ -352,7 +352,7 @@ export default function GemmaDemo() {
   const [serverEvents, setServerEvents] = useState<ServerEvent[]>([])
   const [gemmaStatus,  setGemmaStatus]  = useState<'unknown' | 'gemma4' | 'fallback'>('unknown')
   const [channel,      setChannel]      = useState<DemoChannel | null>(null)
-  const [lastResult,   setLastResult]   = useState<{tier: Tier; score: number; flagAction: string | null} | null>(null)
+  const [,             setLastResult]   = useState<{tier: Tier; score: number; flagAction: string | null} | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const resetTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
