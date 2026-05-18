@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+    environment: ${{ github.ref_name == 'main' && 'desktop-demo' || github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -17,8 +17,8 @@ jobs:
         id: env
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "name=prod" >> $GITHUB_OUTPUT
-            echo "vite_mode=production" >> $GITHUB_OUTPUT
+            echo "name=desktop-demo" >> $GITHUB_OUTPUT
+            echo "vite_mode=staging" >> $GITHUB_OUTPUT
           else
             echo "name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "vite_mode=${{ github.ref_name }}" >> $GITHUB_OUTPUT
