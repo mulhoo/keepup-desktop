@@ -353,7 +353,7 @@ export default function Settings() {
   const [themeOpen, setThemeOpen] = useState(false)
 
   return (
-    <div className="px-10 py-8 max-w-2xl space-y-5">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-2xl space-y-5">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your school configuration.</p>

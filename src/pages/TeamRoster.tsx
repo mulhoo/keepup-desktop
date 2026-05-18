@@ -345,7 +345,7 @@ export default function TeamRoster() {
   const thClass = 'px-4 py-2 select-none cursor-pointer hover:text-foreground transition-colors whitespace-nowrap'
 
   return (
-    <div className="px-10 py-8 max-w-7xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-7xl space-y-6">
       <div>
         <button
           onClick={() => navigate('/dashboard/sports')}
@@ -420,8 +420,8 @@ export default function TeamRoster() {
           </div>
 
           {/* Athletes — table */}
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-hidden overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="border-b bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <th className={thClass} onClick={() => handleSort('first_name')}>

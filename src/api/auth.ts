@@ -18,13 +18,13 @@ export interface LoginResponse {
 }
 
 export const DEMO_ROLES = [
-  { key: 'district_admin',    label: 'District Admin',    description: 'Hajos School District' },
-  { key: 'school_admin',      label: 'School Admin',      description: 'Alfred High School' },
-  { key: 'athletic_director', label: 'Athletic Director', description: 'Alfred High School' },
-  { key: 'head_coach',        label: 'Head Coach',        description: 'Varsity Swimming' },
-  { key: 'assistant_coach',   label: 'Assistant Coach',   description: 'Varsity Swimming' },
-  { key: 'student',           label: 'Student',           description: 'Varsity Swimming' },
-  { key: 'parent',            label: 'Parent',            description: 'Alfred High School' },
+  { key: 'district_admin',    label: 'District Admin',    description: 'Hajos School District', blurb: 'Monitor activity across every school and respond to district-wide alerts' },
+  { key: 'school_admin',      label: 'School Admin',      description: 'Alfred High School',    blurb: 'Oversee school-wide communication, staff access, and compliance reporting' },
+  { key: 'athletic_director', label: 'Athletic Director', description: 'Alfred High School',    blurb: 'Manage all sports programs and review flagged messages across your school' },
+  { key: 'head_coach',        label: 'Head Coach',        description: 'Varsity Swimming',      blurb: 'Send announcements, manage your roster, and monitor team conversations' },
+  { key: 'assistant_coach',   label: 'Assistant Coach',   description: 'Varsity Swimming',      blurb: 'Support your coaching staff with team communication and scheduling' },
+  { key: 'student',           label: 'Student',           description: 'Varsity Swimming',      blurb: 'View your team\'s schedule, results, and coach announcements' },
+  { key: 'parent',            label: 'Parent',            description: 'Alfred High School',    blurb: 'Stay connected to your athlete\'s team through official school channels' },
 ] as const
 
 export type DemoRole = typeof DEMO_ROLES[number]['key']

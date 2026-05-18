@@ -267,7 +267,7 @@ export default function FamilyGroups() {
   const parentSeasons = groupsData?.parent_seasons ?? []
 
   return (
-    <div className="px-10 py-8 max-w-4xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-4xl space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Family Groups</h1>

@@ -854,7 +854,7 @@ export default function Staff() {
         : 'All staff across the district.'
 
   return (
-    <div className="px-10 py-8 max-w-5xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{isSportsCommissioner ? 'Coaches' : 'Staff'}</h1>
@@ -905,8 +905,8 @@ export default function Staff() {
           {groups.map(({ label, entries }) => (
             <div key={label || 'all'} className="space-y-2">
               {label && <h2 className="text-sm font-semibold text-muted-foreground">{label}</h2>}
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="rounded-lg border overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       <th className="px-4 py-2 select-none cursor-pointer hover:text-foreground transition-colors whitespace-nowrap" onClick={() => handleSort('last_name')}>

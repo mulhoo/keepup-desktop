@@ -208,6 +208,7 @@ export default function Login() {
                     <div>
                       <p className="text-sm font-medium">{role.label}</p>
                       <p className="text-xs text-muted-foreground">{role.description}</p>
+                      <p className="hidden md:block text-xs text-muted-foreground/70 mt-0.5">{role.blurb}</p>
                     </div>
                     <span className="text-muted-foreground text-xs">→</span>
                   </button>

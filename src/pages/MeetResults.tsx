@@ -469,7 +469,7 @@ export default function MeetResults() {
       ]
 
   return (
-    <div className="px-10 py-8 max-w-3xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Meet Results</h1>
         <p className="text-sm text-muted-foreground mt-1">

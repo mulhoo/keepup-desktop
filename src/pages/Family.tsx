@@ -350,7 +350,7 @@ export default function Family() {
   const parentSeasons = groupsData?.parent_seasons ?? []
 
   return (
-    <div className="px-10 py-8 max-w-4xl space-y-10">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-4xl space-y-10">
       <div>
         <h1 className="text-2xl font-bold">Family</h1>
         <p className="text-sm text-muted-foreground mt-1">Your children and their sports.</p>

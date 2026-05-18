@@ -132,32 +132,41 @@ function ScoreBar({ score, tier, visible }: { score: number; tier: Tier; visible
 function DataFlowArrow({ active, tier }: { active: boolean; tier: Tier | null }) {
   const arrowColor = tier === 'severe' ? 'text-red-500' : tier === 'questionable' ? 'text-amber-500' : 'text-green-500'
   return (
-    <div className="flex flex-col items-center justify-center gap-4 px-2 min-w-[130px]">
-      <div className={cn('flex flex-col items-center gap-1.5 transition-opacity duration-500', active ? 'opacity-100' : 'opacity-20')}>
-        <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">To KeepUp server</p>
-        <ArrowRight className={cn('w-6 h-6 transition-colors duration-300', active ? arrowColor : 'text-muted-foreground')} />
-        <div className="text-center space-y-0.5">
-          <p className="text-xs font-mono text-muted-foreground">message</p>
-          <p className="text-xs font-mono text-muted-foreground">score</p>
-          <p className="text-xs font-mono text-muted-foreground">tier</p>
-        </div>
-      </div>
-      <div className="w-px h-4 bg-border/40" />
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Never sent to</p>
-        <div className="relative">
-          <div className="px-2 py-1 rounded border border-border/40 bg-muted/30 text-xs text-muted-foreground/60 text-center font-medium">
-            External AI API
-            <br />
-            <span className="text-[9px]">(OpenAI, Google, etc.)</span>
+    <>
+      {/* Desktop: horizontal arrow column */}
+      <div className="hidden lg:flex flex-col items-center justify-center gap-4 px-2 min-w-[130px]">
+        <div className={cn('flex flex-col items-center gap-1.5 transition-opacity duration-500', active ? 'opacity-100' : 'opacity-20')}>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">To KeepUp server</p>
+          <ArrowRight className={cn('w-6 h-6 transition-colors duration-300', active ? arrowColor : 'text-muted-foreground')} />
+          <div className="text-center space-y-0.5">
+            <p className="text-xs font-mono text-muted-foreground">message</p>
+            <p className="text-xs font-mono text-muted-foreground">score</p>
+            <p className="text-xs font-mono text-muted-foreground">tier</p>
           </div>
-          <X className="w-5 h-5 text-red-500 absolute -top-2 -right-2 bg-background rounded-full" />
         </div>
-        <p className="text-[9px] text-muted-foreground/50 text-center leading-tight">
-          Content never leaves<br />the KeepUp system
-        </p>
+        <div className="w-px h-4 bg-border/40" />
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Never sent to</p>
+          <div className="relative">
+            <div className="px-2 py-1 rounded border border-border/40 bg-muted/30 text-xs text-muted-foreground/60 text-center font-medium">
+              External AI API
+              <br />
+              <span className="text-[9px]">(OpenAI, Google, etc.)</span>
+            </div>
+            <X className="w-5 h-5 text-red-500 absolute -top-2 -right-2 bg-background rounded-full" />
+          </div>
+          <p className="text-[9px] text-muted-foreground/50 text-center leading-tight">
+            Content never leaves<br />the KeepUp system
+          </p>
+        </div>
       </div>
-    </div>
+      {/* Mobile: compact horizontal strip between the two panels */}
+      <div className={cn('lg:hidden flex items-center justify-center gap-3 py-2 transition-opacity duration-500', active ? 'opacity-100' : 'opacity-30')}>
+        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">To KeepUp server</span>
+        <ArrowRight className={cn('w-4 h-4 transition-colors duration-300 flex-none', active ? arrowColor : 'text-muted-foreground')} />
+        <span className="text-[9px] text-muted-foreground font-mono">score · tier</span>
+      </div>
+    </>
   )
 }
 
@@ -427,7 +436,7 @@ export default function GemmaDemo() {
   const displayTier    = localResult?.tier ?? 'clear'
 
   return (
-    <div className="px-10 py-8 space-y-6 min-h-full">
+    <div className="px-4 py-6 md:px-10 md:py-8 space-y-6 min-h-full">
 
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -450,7 +459,7 @@ export default function GemmaDemo() {
         )}
       </div>
 
-      <div className="grid grid-cols-[1fr_150px_1fr] gap-0 items-start">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_auto_1fr] gap-0 items-start">
 
         <div className="border rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 bg-muted/40 border-b">

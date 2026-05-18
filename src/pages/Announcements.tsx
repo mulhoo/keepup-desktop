@@ -199,7 +199,7 @@ export default function Announcements() {
     : `${selectedSportIds.size} sport${selectedSportIds.size > 1 ? 's' : ''}`
 
   return (
-    <div className="px-10 py-8">
+    <div className="px-4 py-6 md:px-10 md:py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Announcements</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -207,7 +207,7 @@ export default function Announcements() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[3fr_2fr] gap-6 items-start">
+      <div className="flex flex-col lg:grid lg:grid-cols-[3fr_2fr] gap-6 items-start">
 
       {/* Composer */}
       <div className="rounded-xl border bg-card divide-y">
@@ -391,7 +391,7 @@ export default function Announcements() {
       </div>
 
       {/* Recent announcements — sidebar */}
-      <div className="sticky top-6">
+      <div className="lg:sticky lg:top-6">
         <div className="rounded-xl bg-card border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent</h2>

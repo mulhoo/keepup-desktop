@@ -5,7 +5,7 @@ import { fetchFlaggedMessages } from '@/api/flaggedMessages'
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import {
   BarChart2,
-  PanelLeftClose, PanelLeftOpen, ChevronDown,
+  PanelLeftClose, PanelLeftOpen, ChevronDown, Menu, X,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
@@ -135,6 +135,7 @@ export default function AppShell() {
   const tStr        = t as (key: string) => string
   const { isDark, toggle: toggleTheme } = useTheme()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const location      = useLocation()
   const isCoach       = effectiveRole === 'head_coach' || effectiveRole === 'assistant_coach'
@@ -208,6 +209,8 @@ export default function AppShell() {
 
   const demoRoleLabel = DEMO_ROLES.find(r => r.key === demoRole)?.label
 
+  useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
+
   // Redirect parents away from non-parent routes to /dashboard/family
   useEffect(() => {
     if (!isParent) return
@@ -220,7 +223,7 @@ export default function AppShell() {
   if (isParent) {
     const parentNav = [
       { to: '/dashboard/family',          label: 'Family',        icon: MenuHouse     },
-      { to: '/dashboard/family-messages', label: 'Safety',       icon: MenuSafety,    locked: true },
+      { to: '/dashboard/family-messages', label: 'Safety',        icon: MenuSafety,   locked: true },
       { to: '/dashboard/family-groups',   label: 'Family Groups', icon: MenuFamily    },
       { to: '/dashboard/gemma-demo',      label: 'Gemma 4',       icon: MenuDemo      },
     ]
@@ -229,6 +232,13 @@ export default function AppShell() {
       <div className="min-h-screen flex flex-col bg-background">
         {/* Top bar */}
         <header className="h-12 bg-muted border-b dark:border-transparent dark:bg-blue-950 flex items-center gap-3 px-4 flex-none">
+          <button
+            onClick={() => setMobileNavOpen(v => !v)}
+            aria-label="Open navigation"
+            className="md:hidden w-8 h-8 rounded-md flex items-center justify-center text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 transition-colors flex-none"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <img src={wordingNavy} alt="KeepUp" className="h-7 dark:hidden" />
           <img src={wordingWhite} alt="KeepUp" className="h-7 hidden dark:block" />
           {demoRole && (
@@ -238,7 +248,7 @@ export default function AppShell() {
           )}
           <div className="flex-1" />
           {demoRole && (
-            <button onClick={handleEndDemo} className="text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
+            <button onClick={handleEndDemo} className="hidden sm:block text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
               Reset demo
             </button>
           )}
@@ -251,16 +261,68 @@ export default function AppShell() {
           </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-sm text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
+            className="hidden sm:flex items-center gap-1.5 text-sm text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
           >
             <LogOutIcon className="w-4 h-4" isDark={isDark} />
             {t('nav.signOut')}
           </button>
         </header>
 
+        {/* Mobile nav drawer — parent layout */}
+        {mobileNavOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
+            <aside className="absolute left-0 top-0 bottom-0 w-64 max-w-[85vw] bg-background border-r flex flex-col overflow-hidden">
+              <div className="h-12 flex items-center gap-3 px-4 bg-muted dark:bg-blue-950 border-b flex-none">
+                <img src={wordingNavy} alt="KeepUp" className="h-7 dark:hidden" />
+                <img src={wordingWhite} alt="KeepUp" className="h-7 hidden dark:block" />
+                <div className="flex-1" />
+                <button onClick={() => setMobileNavOpen(false)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-md hover:bg-muted transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="px-4 py-4 border-b flex-none">
+                <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs text-muted-foreground dark:text-white/50 mt-0.5">Parent</p>
+              </div>
+              <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+                {parentNav.map(item => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => cn(
+                      'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10'
+                    )}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className="w-4 h-4 flex-none" isActive={isActive} isDark={isDark} />
+                        <span className="flex-1">{item.label}</span>
+                        {item.locked && <LockIcon className="w-3 h-3 opacity-50" isActive={isActive} isDark={isDark} />}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="px-2 pb-3 pt-2 border-t flex-none">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10 transition-colors"
+                >
+                  <LogOutIcon className="w-4 h-4 flex-none" isDark={isDark} />
+                  {t('nav.signOut')}
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
+
         <div className="flex flex-1 overflow-hidden">
-          {/* Parent sidebar */}
-          <aside className="w-52 border-r flex flex-col shrink-0 bg-muted/50 dark:bg-black/20">
+          {/* Parent sidebar — hidden on mobile */}
+          <aside className="hidden md:flex w-52 border-r flex-col shrink-0 bg-muted/50 dark:bg-black/20">
             <div className="px-4 py-4 border-b">
               <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
               <p className="text-xs text-muted-foreground dark:text-white/50 mt-0.5">Parent</p>
@@ -312,7 +374,7 @@ export default function AppShell() {
           )}
           <div className="flex-1" />
           {demoRole && (
-            <button onClick={handleEndDemo} className="text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
+            <button onClick={handleEndDemo} className="hidden sm:block text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
               Reset demo
             </button>
           )}
@@ -328,7 +390,7 @@ export default function AppShell() {
             className="flex items-center gap-1.5 text-sm text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
           >
             <LogOutIcon className="w-4 h-4" isDark={isDark} />
-            {t('nav.signOut')}
+            <span className="hidden sm:inline">{t('nav.signOut')}</span>
           </button>
         </header>
         <div className="flex-1 overflow-y-auto">
@@ -345,6 +407,13 @@ export default function AppShell() {
 
       {/* Top bar */}
       <header className="h-12 bg-muted border-b dark:border-transparent dark:bg-blue-950 flex items-center gap-3 px-4 flex-none">
+        <button
+          onClick={() => setMobileNavOpen(v => !v)}
+          aria-label="Open navigation"
+          className="md:hidden w-8 h-8 rounded-md flex items-center justify-center text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 transition-colors flex-none"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         <img src={wordingNavy} alt="KeepUp" className="h-7 flex-none dark:hidden" />
         <img src={wordingWhite} alt="KeepUp" className="h-7 flex-none hidden dark:block" />
         {demoRole && (
@@ -355,8 +424,8 @@ export default function AppShell() {
 
         {headerLabel && (
           <>
-            <div className="w-px h-4 bg-foreground/20 dark:bg-white/20 flex-none" />
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="w-px h-4 bg-foreground/20 dark:bg-white/20 flex-none hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-2 min-w-0">
               <span className={cn(
                 'text-sm truncate',
                 isDiffDistrict ? 'text-amber-600 dark:text-amber-300 font-medium' : 'text-foreground/60 dark:text-cyan-400/70'
@@ -371,7 +440,7 @@ export default function AppShell() {
         <div className="flex-1" />
 
         {demoRole && (
-          <button onClick={handleEndDemo} className="text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
+          <button onClick={handleEndDemo} className="hidden sm:block text-xs text-foreground/50 dark:text-white/50 hover:text-foreground dark:hover:text-white transition-colors">
             Reset demo
           </button>
         )}
@@ -388,17 +457,160 @@ export default function AppShell() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 text-sm text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
+          className="hidden sm:flex items-center gap-1.5 text-sm text-foreground/60 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:bg-foreground/8 dark:hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
         >
           <LogOutIcon className="w-4 h-4" isDark={isDark} />
           {t('nav.signOut')}
         </button>
       </header>
 
+      {/* Mobile nav drawer — main layout */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-64 max-w-[85vw] bg-background border-r flex flex-col overflow-hidden">
+            <div className="h-12 flex items-center gap-3 px-4 bg-muted dark:bg-blue-950 border-b flex-none">
+              <img src={wordingNavy} alt="KeepUp" className="h-7 dark:hidden" />
+              <img src={wordingWhite} alt="KeepUp" className="h-7 hidden dark:block" />
+              <div className="flex-1" />
+              <button onClick={() => setMobileNavOpen(false)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-md hover:bg-muted transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <Link
+              to="/dashboard/profile"
+              className="flex items-center gap-3 min-h-[56px] hover:bg-muted/40 transition-colors px-4 py-3 border-b flex-none"
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-none select-none ring-1 ring-border">
+                {userInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs text-muted-foreground dark:text-white/45 truncate">
+                  {activeProfile ? activeProfile.email : user?.email}
+                </p>
+              </div>
+            </Link>
+            <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+              {visibleNav.map(item => {
+                const { key, icon: Icon } = item
+                if (item.children) {
+                  const visibleChildren = item.children.filter(c => !c.roles || c.roles.includes(effectiveRole ?? ''))
+                  if (!visibleChildren.length) return null
+                  const isOpen = expandedGroups.has(key)
+                  const anyChildActive = visibleChildren.some(c => location.pathname.startsWith(c.to))
+                  return (
+                    <div key={key}>
+                      <button
+                        onClick={() => toggleGroup(key)}
+                        className={cn(
+                          'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                          anyChildActive
+                            ? 'text-foreground font-medium'
+                            : 'text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10'
+                        )}
+                      >
+                        <Icon className="w-4 h-4 flex-none" isActive={anyChildActive} isDark={isDark} />
+                        {tStr(key)}
+                        <ChevronDown className={cn('ml-auto w-3.5 h-3.5 flex-none transition-transform duration-150', isOpen && 'rotate-180')} />
+                      </button>
+                      {isOpen && (
+                        <div className="ml-3 pl-3.5 border-l border-border/40 mt-0.5 mb-1 space-y-0.5">
+                          {visibleChildren.map(({ to, label, icon: ChildIcon }) => (
+                            <NavLink
+                              key={to}
+                              to={to}
+                              className={({ isActive }) => cn(
+                                'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
+                                isActive
+                                  ? 'bg-primary text-primary-foreground font-medium'
+                                  : 'text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10'
+                              )}
+                            >
+                              {({ isActive }) => (
+                                <>
+                                  <ChildIcon className="w-3.5 h-3.5 flex-none" isActive={isActive} isDark={isDark} />
+                                  {label}
+                                </>
+                              )}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                const badgeCount = item.to === '/dashboard/parent-requests' ? pendingCount
+                                 : item.to === '/dashboard/reviews'         ? reviewCount
+                                 : 0
+                const hasBadge = badgeCount > 0
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to!}
+                    className={({ isActive }) => cn(
+                      'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10'
+                    )}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span className="relative flex-none">
+                          <Icon className="w-4 h-4" isActive={isActive} isDark={isDark} />
+                          {hasBadge && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-destructive" />}
+                        </span>
+                        {tStr(key)}
+                        {hasBadge && (
+                          <span className="ml-auto flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive text-xs font-semibold text-destructive-foreground px-1">
+                            {badgeCount}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                )
+              })}
+              <SportRail role={effectiveRole} collapsed={false} />
+            </nav>
+            {settingsItem && (
+              <div className="px-2 pt-2 border-t flex-none">
+                <NavLink
+                  to={settingsItem.to!}
+                  className={({ isActive }) => cn(
+                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground font-medium'
+                      : 'text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10'
+                  )}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <SettingsIcon className="w-4 h-4 flex-none" isActive={isActive} isDark={isDark} />
+                      {tStr('nav.settings')}
+                    </>
+                  )}
+                </NavLink>
+              </div>
+            )}
+            <div className="px-2 pb-3 pt-1 flex-none">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground dark:text-white/65 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/10 transition-colors"
+              >
+                <LogOutIcon className="w-4 h-4 flex-none" isDark={isDark} />
+                {t('nav.signOut')}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
 
         <aside className={cn(
-          'flex-none flex flex-col transition-[width] duration-200 relative bg-muted/50 dark:bg-black/20',
+          'hidden md:flex flex-none flex-col transition-[width] duration-200 relative bg-muted/50 dark:bg-black/20',
           collapsed ? 'w-14' : 'w-56'
         )}>
 

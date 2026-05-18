@@ -160,7 +160,7 @@ export default function AllAnnouncements() {
   }
 
   return (
-    <div className="px-10 py-8 max-w-3xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-3xl space-y-6">
       <Link
         to="/dashboard/announcements"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

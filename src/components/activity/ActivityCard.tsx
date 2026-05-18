@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils'
 import { notifyParents, notifyAD, notifyDistrictAdmin, deleteMessageEverywhere, type Activity } from '@/api/activities'
 import { toast } from '@/lib/toast'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { useSafety } from '@/contexts/SafetyContext'
 
 interface Props {
@@ -27,6 +28,19 @@ function formatTime(iso: string) {
   })
 }
 
+function formatDateShort(iso: string) {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`
+}
+
+function abbreviateSchool(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(w => /^[A-Z]/.test(w))
+    .map(w => w[0])
+    .join('')
+}
+
 function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
   return (
@@ -34,6 +48,25 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
       <span className="w-24 flex-none text-muted-foreground">{label}</span>
       <span>{value}</span>
     </div>
+  )
+}
+
+function InfoTip({ children }: { children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={e => e.stopPropagation()}
+          className="w-4 h-4 rounded-full border text-[10px] font-bold text-muted-foreground hover:text-foreground hover:border-foreground transition-colors flex items-center justify-center flex-none leading-none"
+        >
+          i
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" align="start" className="max-w-[220px] px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+        {children}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -92,7 +125,7 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         onClick={() => { setOpen(true); logAdminAction('alert_viewed', `Viewed alert — ${activity.summary}`) }}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border bg-card text-left hover:bg-muted/50 transition-colors group"
+        className="w-full flex items-center gap-1.5 sm:gap-3 px-4 py-3 rounded-lg border bg-card text-left hover:bg-muted/50 transition-colors group"
       >
         <span className={cn('w-2 h-2 rounded-full flex-none', dotColor)} />
         <span className="text-xs font-medium text-muted-foreground w-16 flex-none">{label}</span>
@@ -105,11 +138,15 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
           )}
           {activity.school_name && (
             <span className="text-xs px-1.5 py-0.5 rounded border bg-muted/50 text-muted-foreground font-medium">
-              {activity.school_name}
+              <span className="sm:hidden">{abbreviateSchool(activity.school_name)}</span>
+              <span className="hidden sm:inline">{activity.school_name}</span>
             </span>
           )}
         </div>
-        <span className="text-xs text-muted-foreground flex-none">{formatTime(activity.occurred_at)}</span>
+        <span className="text-xs text-muted-foreground flex-none">
+          <span className="sm:hidden">{formatDateShort(activity.occurred_at)}</span>
+          <span className="hidden sm:inline">{formatTime(activity.occurred_at)}</span>
+        </span>
         <ChevronRight className="w-4 h-4 text-muted-foreground flex-none opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
 
@@ -139,17 +176,22 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
           <DialogFooter className="flex-col items-start gap-2 sm:flex-col">
             <div className="flex flex-wrap gap-2 w-full">
               {canNotifyParents && (
-                <Button
-                  size="sm"
-                  variant={activity.parents_notified_at ? 'secondary' : 'outline'}
-                  disabled={!!activity.parents_notified_at || parentsMutation.isPending}
-                  onClick={() => parentsMutation.mutate()}
-                  className="gap-1.5"
-                >
-                  {activity.parents_notified_at
-                    ? <><Check className="w-3.5 h-3.5" /> Parents Notified</>
-                    : <><Bell className="w-3.5 h-3.5" /> Notify Parents</>}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant={activity.parents_notified_at ? 'secondary' : 'outline'}
+                    disabled={!!activity.parents_notified_at || parentsMutation.isPending}
+                    onClick={() => parentsMutation.mutate()}
+                    className="gap-1.5"
+                  >
+                    {activity.parents_notified_at
+                      ? <><Check className="w-3.5 h-3.5" /> Parents Notified</>
+                      : <><Bell className="w-3.5 h-3.5" /> Notify Parents</>}
+                  </Button>
+                  <InfoTip>
+                    Sends an official school email to the student's parents — not through KeepUp. Coming soon.
+                  </InfoTip>
+                </div>
               )}
               {canNotifyAD && (
                 <Button
@@ -165,17 +207,22 @@ export default function ActivityCard({ activity, canNotifyParents, canNotifyAD, 
                 </Button>
               )}
               {canNotifyDistrictAdmin && (
-                <Button
-                  size="sm"
-                  variant={activity.district_notified_at ? 'secondary' : 'outline'}
-                  disabled={!!activity.district_notified_at || districtMutation.isPending}
-                  onClick={() => districtMutation.mutate()}
-                  className="gap-1.5"
-                >
-                  {activity.district_notified_at
-                    ? <><Check className="w-3.5 h-3.5" /> District Admin Notified</>
-                    : <><UserCheck className="w-3.5 h-3.5" /> Alert District Admin</>}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant={activity.district_notified_at ? 'secondary' : 'outline'}
+                    disabled={!!activity.district_notified_at || districtMutation.isPending}
+                    onClick={() => districtMutation.mutate()}
+                    className="gap-1.5"
+                  >
+                    {activity.district_notified_at
+                      ? <><Check className="w-3.5 h-3.5" /> District Admin Notified</>
+                      : <><UserCheck className="w-3.5 h-3.5" /> Alert District Admin</>}
+                  </Button>
+                  <InfoTip>
+                    Sends an official school email to the district administrator — not through KeepUp. Coming soon.
+                  </InfoTip>
+                </div>
               )}
             </div>
 

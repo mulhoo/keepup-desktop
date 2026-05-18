@@ -112,7 +112,7 @@ export default function TeamAnnouncements() {
   const scheduleReady = scheduling && !!scheduleDate
 
   return (
-    <div className="px-10 py-8 max-w-5xl">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-5xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Announcements</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -120,7 +120,7 @@ export default function TeamAnnouncements() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[1fr_300px] gap-6 items-start">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-6 items-start">
 
         {/* Composer */}
         <div className="space-y-4">

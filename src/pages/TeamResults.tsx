@@ -519,7 +519,7 @@ function UploadDialog({
                 </label>
                 <div className="space-y-2">
                   {highlights.map((h, i) => (
-                    <div key={i} className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 items-center">
+                    <div key={i} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_80px_auto] gap-2 items-center">
                       <input type="text" value={h.athlete} onChange={e => updateHighlight(i, { athlete: e.target.value })}
                         placeholder="Athlete name"
                         className="h-8 px-2.5 text-xs border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
@@ -668,7 +668,7 @@ export default function TeamResults() {
   }
 
   return (
-    <div className="px-10 py-8 max-w-4xl space-y-6">
+    <div className="px-4 py-6 md:px-10 md:py-8 max-w-4xl space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">{sport?.name ?? 'Team'} Results</h1>
